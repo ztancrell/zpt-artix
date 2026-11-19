@@ -1,0 +1,14 @@
+pkgname=scx-loader-openrc
+pkgver=20261119
+pkgrel=1
+pkgdesc="OpenRC script for scx_loader (scx-tools)"
+arch=(any)
+url="https://github.com/sched-ext/scx-loader"
+license=('GPL-2.0-only')
+depends=(openrc dbus scx-tools)
+source=(scx_loader.initd)
+sha256sums=('a70edacdb55b27b548b0a22c967aec64b34a6e0cc7d50ab9300a99a6db2b7565')
+
+package() {
+  install -Dm755 scx_loader.initd "${pkgdir}/etc/init.d/scx_loader"
+}

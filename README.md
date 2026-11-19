@@ -17,6 +17,14 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
     ([ananicy-rules](https://github.com/CachyOS/ananicy-rules), release 1.1.49) in `/etc/ananicy.d`.
     `ananicy.conf` is a backup file: if ananicy-cpp already generated one, the CachyOS one lands as
     `ananicy.conf.pacnew`.
+  - `scx-scheds`: sched_ext schedulers and tools ([scx](https://github.com/sched-ext/scx),
+    release 1.1.4), built like Arch's package. Needs a kernel with sched_ext.
+  - `scx-tools`: `scx_loader` (D-Bus daemon that starts and switches schedulers), `scxctl`, `scxtui`
+    ([scx-loader](https://github.com/sched-ext/scx-loader), release 1.1.3), without the systemd
+    unit. Config: `/etc/scx_loader.toml` (sample in `/usr/share/scx_loader/config.toml`). `scxtui`'s
+    log view reads journalctl, so it shows nothing on Artix.
+  - `scx-loader-openrc`: OpenRC script `/etc/init.d/scx_loader` (`supervise-daemon`, needs dbus,
+    stops with SIGINT like the upstream unit).
 - `build.sh`: builds every package in `pkgs/` (or only the `pkgs/<dir>/` arguments) with `makepkg -f`
   (never installs anything), copies the results into `repo/` and indexes them with `repo-add` into
   `repo/zpt-artix.db.tar.zst`. `MAKEPKG_EXTRA` adds makepkg flags. It skips the dep check for

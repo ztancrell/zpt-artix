@@ -1,0 +1,11 @@
+#!/usr/bin/openrc-run
+
+supervisor=supervise-daemon
+command="/usr/bin/scx_loader"
+
+# The upstream systemd unit stops it with SIGINT, which detaches the running scheduler cleanly.
+retry="SIGINT/10/SIGKILL/5"
+
+depend() {
+	need dbus
+}
