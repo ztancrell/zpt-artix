@@ -92,19 +92,29 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
       `--enable-debug`, without the GNOME/KDE session files.
     - `fastcompmgr-homestead`: the X11 compositor ([fastcompmgr](https://github.com/ztancrell/fastcompmgr)).
     - `tint2-homestead`: the panel ([tint2](https://github.com/ztancrell/tint2)), without `tint2conf`.
+  - Desktop tools in no Artix repo, built from Arch's or the AUR's PKGBUILD (named in each one's
+    first line), unchanged unless noted:
+    - `wmctrl` 1.07 (Arch): tarball from Debian's archive, same sha512 (web.archive.org serves
+      Arch's URL decompressed).
+    - `dex` 0.10.1 (Arch).
+    - `obmenu-generator` 0.93 (AUR); its `openbox` dependency is met by `openbox-homestead`.
+    - `perl-linux-desktopfiles` 0.26 (AUR), needed by `obmenu-generator`.
+    - `xcursor-neutral` 1.13a (AUR): source from the mirror its PKGBUILD names, same sha256
+      (distribute.kde.org no longer serves it).
   - `zpt-artix-desktop`: meta-package (no files) for the whole desktop: the homestead X stack,
-    xinit/xrandr/xset, xclip, xdotool, `ly` + `ly-openrc`, session tools (dunst, feh,
+    xinit/xrandr/xset, xclip, xdotool, wmctrl, `ly` + `ly-openrc`, session tools (obmenu-generator,
+    dex, dunst, feh,
     polkit-gnome, lxappearance-obconf, xdg-user-dirs-gtk, xdg-desktop-portal-gtk, slock, redshift,
     flameshot, scrot), Thunar with its plugins, tumbler, gvfs and archivers, PipeWire with
     `pipewire-openrc`/`pipewire-pulse-openrc`/`wireplumber-openrc`, pavucontrol, pasystray,
     `networkmanager-openrc`, network-manager-applet, nss-mdns, `bluez-openrc`, blueman, kitty,
-    fonts, upower and `power-profiles-daemon-openrc`. No GPU drivers or microcode (per machine).
-    Not in any Artix repo, so left out: wmctrl, obmenu-generator, dex, xcursor-neutral.
+    fonts, the xcursor-neutral cursor theme, upower and `power-profiles-daemon-openrc`. No GPU
+    drivers or microcode (per machine).
   - `zpt-artix-apps`: meta-package for everyday apps: firefox, thunderbird, qbittorrent, audacious,
     steam, lutris, mangohud, gamemode, gamescope, protontricks, git, github-cli, htop, fastfetch,
     ripgrep, flatpak. `steam` is in Artix's `[lib32]` repo, which Artix's default `pacman.conf`
-    leaves off: enable it first. Not in any Artix repo, so left out: obsidian,
-    heroic-games-launcher (both are on Flathub).
+    leaves off: enable it first. Left out: obsidian and heroic-games-launcher (in no Artix repo;
+    Arch's and the AUR's PKGBUILDs need electron43, Artix's newest is electron42; both are on Flathub).
 - Mirrored, not built: `linux-cachyos-eac` (7.3.3-2) and `cachyos-eac-signing-key` (1-2) are
   CachyOS's signed packages, copied into `repo/` unchanged with their `.sig` by `mirror-cachyos.sh`.
   CI then deletes CachyOS's `.sig` and signs them with the zpt-artix key, like every other package.
@@ -187,7 +197,7 @@ means the daemon process is running). The boot check stays manual:
    needed: `build.sh` skips the dep check for `*-openrc` and `zpt-artix-*`, `scx-tools` adds
    `scx-scheds` only at package time, and `build.sh` retries `xlibre-input-libinput-homestead`
    against `repo/` (added to the container's `pacman.conf` as the local `[zpt-artix]` repo) after
-   `xlibre-xserver-homestead` has built;
+   `xlibre-xserver-homestead` has built, and `obmenu-generator` after `perl-linux-desktopfiles`;
 2. runs `mirror-cachyos.sh` (it fails the run unless every CachyOS signature verifies), then deletes
    CachyOS's `.sig` files;
 3. runs `namcap` on every package: report only, in the run's summary page (namcap's errors include

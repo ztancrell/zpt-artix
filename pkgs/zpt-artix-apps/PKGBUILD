@@ -1,5 +1,6 @@
 # Not in Artix's repos (system, world, galaxy, lib32; checked 2026-11-19), so left out:
-# obsidian, heroic-games-launcher. steam is in lib32, which Artix's default pacman.conf leaves off.
+# obsidian, heroic-games-launcher. Both need electron43 (Arch's obsidian, AUR heroic-games-launcher);
+# Artix's newest is electron42 (checked 2026-11-19). steam is in lib32, which Artix's default pacman.conf leaves off.
 pkgname=zpt-artix-apps
 pkgver=1
 pkgrel=1
