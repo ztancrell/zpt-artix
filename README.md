@@ -76,19 +76,19 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
       `eac-tools` to the same tag.
 - Mirrored, not built: `linux-cachyos-eac` (7.3.3-2) and `cachyos-eac-signing-key` (1-2) are
   CachyOS's signed packages, copied into `repo/` unchanged with their `.sig` by `mirror-cachyos.sh`.
+  CI then deletes CachyOS's `.sig` and signs them with the zpt-artix key, like every other package.
   The kernel and the systemd-boot file must keep CachyOS's Secure Boot signature, so they are never
   rebuilt. Sources: kernel [linux-cachyos](https://github.com/CachyOS/linux-cachyos)
   (`linux-cachyos-eac`, GPL-2.0), systemd-boot [systemd](https://github.com/systemd/systemd) 262.2
   (LGPL-2.1+).
 - `zpt-artix.asc`: this repo's public signing key (`zpt-artix repo`, ed25519, fingerprint
   `473D2CE689E0FE660D43FD715566DC3F8C6B2B75`). The private key exists only as the
-  `GPG_PRIVATE_KEY` secret of the GitHub repo, for the planned CI signing; nothing is signed with
-  it yet.
+  `GPG_PRIVATE_KEY` secret of the GitHub repo; CI signs every package and the db with it.
 - `keys/cachyos.asc`: CachyOS's packager key (`CachyOS <admin@cachyos.org>`,
   fingerprint `882DCFE48E2051D48E2562ABF3B607488DB35A47`), byte-identical to
-  `/usr/share/pacman/keyrings/cachyos.gpg` from CachyOS's `cachyos-keyring` 20240331-1. pacman checks
-  the mirrored packages' `.sig` files, so add the key once on Artix (only the key, never the CachyOS
-  repo): `sudo pacman-key --add keys/cachyos.asc && sudo pacman-key --lsign-key 882DCFE48E2051D48E2562ABF3B607488DB35A47`.
+  `/usr/share/pacman/keyrings/cachyos.gpg` from CachyOS's `cachyos-keyring` 20240331-1. Only
+  `mirror-cachyos.sh` uses it; pacman never needs it to install from the published repo (CI re-signs
+  the mirrored packages with the zpt-artix key).
 - `mirror-cachyos.sh`: downloads the packages pinned in its `PKGS` line and their `.sig` from a
   CachyOS mirror (x86_64 `cachyos` repo; `MIRROR` overrides it), verifies each signature with gpgv
   against `keys/cachyos.asc` by full fingerprint, refuses on any failure (nothing is copied), then
@@ -104,6 +104,7 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
   `MAKEPKG_EXTRA="-s --noconfirm"`, so build deps are installed in the container only and packages
   link against Artix libraries, not the host's.
 - `repo/`: the built local repo (not committed).
+- `.github/workflows/repo.yml`: CI, see [CI](#ci).
 
 ## Build
 
@@ -119,3 +120,45 @@ example at `https://cdn77.cachyos.org/repo/x86_64/cachyos/`), put it in the `PKG
 `mirror-cachyos.sh`, run `./mirror-cachyos.sh` (needs curl, gpg and repo-add, on any host: it only
 copies files) and commit the changed line. `repo-add -R` deletes the old package file from `repo/`;
 delete its old `.sig` if it is left over.
+
+## CI
+
+`.github/workflows/repo.yml` runs on every push to `master`, weekly (Monday 04:17 UTC) and by hand
+(Actions tab, "Run workflow", or `gh workflow run repo`). In a fresh
+`docker.io/artixlinux/artixlinux:base-devel` container it:
+
+1. builds every package with `build.sh` as a non-root build user, with
+   `MAKEPKG_EXTRA="-s --noconfirm -c"` (build deps come from the Artix repos; `-c` deletes each
+   package's `src/` and `pkg/` after it builds, to stay within the runner's disk). No build order is
+   needed: `build.sh` skips the dep check for `*-openrc` and `zpt-artix-*`, and `scx-tools` adds
+   `scx-scheds` only at package time;
+2. runs `mirror-cachyos.sh` (it fails the run unless every CachyOS signature verifies), then deletes
+   CachyOS's `.sig` files;
+3. runs `namcap` on every package: report only, in the run's summary page (namcap's errors include
+   false positives, so they don't fail the run);
+4. signs every package and the db with the zpt-artix key (private key in the `GPG_PRIVATE_KEY`
+   secret); `repo-add --verify` checks every package signature;
+5. only if all of that passed: updates the rolling release [`repo`](https://github.com/ztancrell/zpt-artix/releases/tag/repo)
+   in place, so it always mirrors the current repo and is never missing: new packages and `.sig` files
+   first, then `zpt-artix.db`/`.files` (+ `.sig`), then it deletes assets no longer in the repo.
+   Scheduled runs stop before this step: they never publish.
+
+Results: <https://github.com/ztancrell/zpt-artix/actions>. Signing key `zpt-artix.asc`, fingerprint
+`473D2CE689E0FE660D43FD715566DC3F8C6B2B75`.
+
+## Install
+
+Once on each Artix machine, trust the repo key (only this key: the CachyOS key is not needed):
+
+```sh
+curl -sLO https://raw.githubusercontent.com/ztancrell/zpt-artix/master/zpt-artix.asc
+sudo pacman-key --add zpt-artix.asc
+sudo pacman-key --lsign-key 473D2CE689E0FE660D43FD715566DC3F8C6B2B75
+```
+
+Add to `/etc/pacman.conf`, after the Artix repos (default `SigLevel`, signatures required):
+
+```ini
+[zpt-artix]
+Server = https://github.com/ztancrell/zpt-artix/releases/download/repo
+```

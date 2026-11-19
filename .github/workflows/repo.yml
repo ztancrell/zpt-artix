@@ -1,0 +1,84 @@
+# Build every package in a clean Artix container, mirror CachyOS's EAC packages, check and sign
+# everything with the zpt-artix key, and publish the signed pacman repo as the assets of the
+# rolling release "repo". See README "CI".
+name: repo
+on:
+  push:
+    branches: [master]
+  schedule:
+    - cron: '17 4 * * 1'  # weekly: catches Artix updates breaking the builds
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: repo
+defaults:
+  run:
+    shell: bash
+env:
+  KEY: 473D2CE689E0FE660D43FD715566DC3F8C6B2B75  # zpt-artix.asc
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    container: docker.io/artixlinux/artixlinux:base-devel
+    steps:
+      - name: Set up container
+        run: |
+          pacman -Syu --noconfirm --needed base-devel git namcap github-cli
+          useradd -m builder
+          echo 'builder ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/builder
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+        with:
+          # Package builds run third-party code as builder (NOPASSWD sudo): keep the token out of .git/config.
+          persist-credentials: false
+      - name: Build
+        run: |
+          chown -R builder .
+          # -c deletes each package's src/ and pkg/ after it builds: scx-scheds' src/ alone is ~4 GB.
+          # Packages that need other zpt-artix packages need no build order: build.sh skips the dep
+          # check for *-openrc and zpt-artix-*, and scx-tools adds scx-scheds only in package().
+          sudo -H -u builder env MAKEPKG_EXTRA="-s --noconfirm -c" ./build.sh
+      - name: Mirror CachyOS's EAC packages
+        run: |
+          # Verifies each package against CachyOS's key by fingerprint and refuses on any failure.
+          ./mirror-cachyos.sh
+          # Pacman on Artix trusts only the zpt-artix key: drop CachyOS's signatures, re-signed below.
+          rm -v repo/*.sig
+      - name: namcap (report only)
+        run: |
+          for f in repo/*.pkg.tar.zst; do namcap "$f"; done | tee namcap.txt
+          { echo "## namcap: $(grep -c ' E: ' namcap.txt) errors, $(grep -c ' W: ' namcap.txt) warnings"
+            echo '```'; cat namcap.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Sign packages and db
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        run: |
+          GNUPGHOME=$(mktemp -d)  # separate from export, so a mktemp failure stops the step
+          export GNUPGHOME
+          gpg --batch --import <<< "$GPG_PRIVATE_KEY"
+          cd repo
+          for f in *.pkg.tar.zst; do gpg --batch -u "$KEY" --detach-sign "$f"; done
+          rm -f zpt-artix.*
+          repo-add --sign --verify --key "$KEY" zpt-artix.db.tar.zst *.pkg.tar.zst
+      - name: Publish rolling release "repo"
+        # The weekly cron run only checks that everything still builds and verifies.
+        if: github.ref == 'refs/heads/master' && github.event_name != 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir dist && cp -L repo/* dist/  # real files: pacman fetches zpt-artix.db, not the symlink target
+          r=(repo -R "$GITHUB_REPOSITORY")
+          notes="Signed pacman repo built from $GITHUB_SHA. Server = https://github.com/$GITHUB_REPOSITORY/releases/download/repo"
+          gh release view "${r[@]}" >/dev/null 2>&1 ||
+            gh release create "${r[@]}" --target "$GITHUB_SHA" --title "zpt-artix pacman repo" --notes "$notes"
+          # The release is never missing: packages go up first, the db (zpt-artix.db/.files and .sig) last, so
+          # the db never names a package that is not there yet; stale assets go only after the new db is up.
+          shopt -s extglob
+          gh release upload "${r[@]}" --clobber dist/!(zpt-artix.*)
+          gh release upload "${r[@]}" --clobber dist/zpt-artix.*
+          gh release view "${r[@]}" --json assets -q '.assets[].name' | sort | comm -23 - <(ls dist | sort) |
+            while read -r a; do gh release delete-asset "${r[@]}" "$a" --yes; done
+          gh release edit "${r[@]}" --notes "$notes"
+          # GitHub rewrites some characters in asset names; any rename would break pacman downloads.
+          diff <(ls dist | sort) <(gh release view "${r[@]}" --json assets -q '.assets[].name' | sort)
