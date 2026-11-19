@@ -1,0 +1,11 @@
+#!/usr/bin/openrc-run
+
+# One-shot, like CachyOS's pci-latency.service. Not in any runlevel by default:
+# rc-update add pci-latency default
+description="Adjust latency timers for PCI peripherals"
+
+start() {
+	ebegin "Adjusting PCI latency timers"
+	/usr/bin/pci-latency >/dev/null
+	eend $?
+}

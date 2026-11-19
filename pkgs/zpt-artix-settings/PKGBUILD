@@ -1,0 +1,72 @@
+# Reference: CachyOS cachyos-settings 1:1.4.4-1 (built from the same CachyOS-Settings 1.4.4 tag as
+# eac-tools). Every upstream file must be on _keep or _drop: any other file fails the build, so new
+# upstream files get reviewed on a bump. Ported: game-performance (elogind-inhibit),
+# pci-latency.service (pci-latency.initd), user file limits (30-nofile.conf).
+pkgname=zpt-artix-settings
+pkgver=1.4.4
+pkgrel=1
+pkgdesc="CachyOS system tuning from CachyOS-Settings for Artix (OpenRC): sysctl, udev, modprobe, limits, gaming tools"
+arch=(any)
+url="https://github.com/CachyOS/CachyOS-Settings"
+license=('GPL-3.0-only')
+depends=(ananicy-cpp-openrc bash cachyos-ananicy-rules elogind iw pciutils wireless-regdb zramen-openrc)
+optdepends=('lua-luv: for topmem'
+            'power-profiles-daemon: for game-performance'
+            'hdparm: for 69-hdparm.rules (spinning SATA disks)')
+conflicts=(cachyos-settings)
+source=("${pkgname}-${pkgver}.tar.gz::${url}/archive/refs/tags/${pkgver}.tar.gz"
+        pci-latency.initd
+        30-nofile.conf)
+sha512sums=('00465af01472fccb43643b811f59f3e7f8b060d8c6c426df035702eae42f3eeeae69720dd393c1aedf54d83690ab91e85515242c5ee74802a3bcf1d4951319f9'
+            '88a4dd660baaab4d839cc88b5e6fa32220c89dee2206eee1a412d1d4cc3d9c27bb09d87b91474864ae5f346071fe398a34feee25bfb47b2502aa3cbbabb04527'
+            '73503721ac4ea235a879dafb4dc8c79823b9559757e83638db54a424eeaa43b930689104912be7ac8425799d6f7b2e4dbcb798031ae0d8d96217c80c160bce5f')
+
+# Installed as-is (bash globs).
+_keep=(
+  etc/security/limits.d/20-audio.conf
+  usr/bin/{dlss-swapper,dlss-swapper-dll,kerver,pci-latency,topmem,zink-run}
+  usr/lib/iw-set-regdomain
+  usr/lib/modprobe.d/{amdgpu,blacklist,nvidia}.conf
+  usr/lib/modules-load.d/ntsync.conf
+  usr/lib/sysctl.d/70-cachyos-settings.conf
+  usr/lib/tmpfiles.d/{coredump,thp-shrinker,thp}.conf
+  usr/lib/udev/audio-pm-ctl
+  usr/lib/udev/rules.d/{20-audio-pm,30-zram,40-hpet-permissions,50-sata,60-ioschedulers,61-writeback-limits,69-hdparm,71-nvidia,85-iw-regulatory,99-cpu-dma-latency}.rules
+  usr/share/X11/xorg.conf.d/20-touchpad.conf
+)
+# Not installed: systemd-only (pci-latency.service, limits, zram and timesyncd are ported or left to
+# Artix's defaults), NetworkManager dns=systemd-resolved, CachyOS branding and services, eac-* (eac-tools).
+# game-performance is ported in package().
+_drop=(
+  '*.md'
+  'usr/lib/systemd/*'
+  usr/lib/NetworkManager/conf.d/dns.conf
+  etc/debuginfod/cachyos.urls
+  usr/bin/{cachyos-bugreport.sh,paste-cachyos,sbctl-batch-sign,eac-setup,eac-status,game-performance}
+  usr/share/icons/cachyos.svg
+  usr/share/glib-2.0/schemas/zz_cachyos.org.gnome.login-screen.gschema.override
+)
+
+_on() { local p; for p in "${@:2}"; do [[ $1 == $p ]] && return 0; done; return 1; }
+
+package() {
+  cd "CachyOS-Settings-${pkgver}"
+  local f
+  for f in $(find . -type f -printf '%P\n' | sort); do
+    if _on "$f" "${_keep[@]}"; then
+      install -Dm$([[ -x $f ]] && echo 755 || echo 644) "$f" "${pkgdir}/$f"
+    elif ! _on "$f" "${_drop[@]}"; then
+      error "Upstream file '$f' is on neither _keep nor _drop: review it and add it to one."
+      return 1
+    fi
+  done
+
+  sed 's/exec systemd-inhibit /exec elogind-inhibit /' usr/bin/game-performance > ../game-performance
+  if ! grep -q 'exec elogind-inhibit ' ../game-performance || grep -q systemd ../game-performance; then
+    error "The game-performance port no longer applies: review upstream's game-performance."
+    return 1
+  fi
+  install -Dm755 ../game-performance -t "${pkgdir}/usr/bin/"
+  install -Dm755 ../pci-latency.initd "${pkgdir}/etc/init.d/pci-latency"
+  install -Dm644 ../30-nofile.conf -t "${pkgdir}/etc/security/limits.d/"
+}

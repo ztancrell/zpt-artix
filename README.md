@@ -40,6 +40,38 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
     system partition found with findmnt/lsblk instead of `bootctl`, and it installs
     `systemd-boot-cachyos-signed-efi`. Needs `limine-mkinitcpio-hook` (galaxy) and elogind.
     Setup steps: [CachyOS wiki](https://wiki.cachyos.org/configuration/easy_anti_cheat/).
+  - `zpt-artix-settings`: CachyOS's system tuning from
+    [CachyOS-Settings](https://github.com/CachyOS/CachyOS-Settings) 1.4.4 (same tag tarball and
+    sha512 pin as `eac-tools`), in place of CachyOS's `cachyos-settings` (conflicts with it). Needs
+    `ananicy-cpp-openrc`, `cachyos-ananicy-rules`, `zramen-openrc`, elogind, iw, wireless-regdb and
+    pciutils; optional: `lua-luv` (topmem), `power-profiles-daemon` (game-performance), hdparm
+    (`69-hdparm.rules`).
+    - Kept as-is: sysctl (`70-cachyos-settings.conf`), all udev rules and `audio-pm-ctl`, modprobe.d
+      (amdgpu, blacklist, nvidia), `modules-load.d/ntsync.conf` (OpenRC's `modules` service reads
+      `/usr/lib/modules-load.d`), tmpfiles.d (coredump, thp, thp-shrinker), `limits.d/20-audio.conf`,
+      the X11 touchpad config, `iw-set-regdomain`, and the tools `pci-latency`, `zink-run`,
+      `dlss-swapper`, `dlss-swapper-dll`, `topmem`, `kerver`.
+    - Ported: `game-performance` uses `elogind-inhibit` instead of `systemd-inhibit`;
+      `/etc/init.d/pci-latency` is a one-shot OpenRC script in place of `pci-latency.service`, in no
+      runlevel by default (`rc-update add pci-latency default`); the user open file limit
+      (systemd `DefaultLimitNOFILE=1024:1048576`) is `/etc/security/limits.d/30-nofile.conf`.
+    - Left to Artix's defaults: zram and time servers. zramen has no config file (only environment
+      variables, which would mean owning `/etc/conf.d/zramen`), and Artix's `chrony.conf` includes no
+      drop-in directory, so zramen keeps its defaults (lz4, 25% of RAM, priority 32767) instead of
+      CachyOS's zstd, size = RAM, priority 100, and chrony keeps `pool 2.arch.pool.ntp.org` instead of
+      `time.cloudflare.com`.
+    - Dropped: everything under `/usr/lib/systemd`, NetworkManager's `dns=systemd-resolved` (breaks
+      DNS on Artix), CachyOS branding and services (`cachyos.svg`, the GNOME login-screen override,
+      debuginfod URLs, `paste-cachyos`, `cachyos-bugreport.sh`, `sbctl-batch-sign`), and
+      `eac-setup`/`eac-status` (in `eac-tools`).
+    - Inert on Artix, kept as-is: `85-iw-regulatory.rules` starts a systemd unit, and
+      `iw-set-regdomain` reads the timezone with `timedatectl`, so the regulatory domain is not set
+      automatically; `kerver`'s scheduler section reads journalctl and shows nothing.
+    - Keep-list rule: `package()` installs only files on `_keep` and fails the build on any upstream
+      file on neither `_keep` nor `_drop`, naming it. To bump: set `pkgver` to the new tag, run
+      `updpkgsums`, build, and sort every file the build names onto `_keep` or `_drop` (port it if it
+      needs systemd). The build also fails if the `game-performance` port no longer applies. Bump
+      `eac-tools` to the same tag.
 - Mirrored, not built: `linux-cachyos-eac` (7.3.3-2) and `cachyos-eac-signing-key` (1-2) are
   CachyOS's signed packages, copied into `repo/` unchanged with their `.sig` by `mirror-cachyos.sh`.
   The kernel and the systemd-boot file must keep CachyOS's Secure Boot signature, so they are never
