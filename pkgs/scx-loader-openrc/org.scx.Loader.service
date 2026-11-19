@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.scx.Loader
+Exec=/usr/bin/rc-service scx_loader start
+User=root

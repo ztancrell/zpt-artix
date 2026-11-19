@@ -21,10 +21,12 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
     release 1.1.4), built like Arch's package. Needs a kernel with sched_ext.
   - `scx-tools`: `scx_loader` (D-Bus daemon that starts and switches schedulers), `scxctl`, `scxtui`
     ([scx-loader](https://github.com/sched-ext/scx-loader), release 1.1.3), without the systemd
-    unit. Config: `/etc/scx_loader.toml` (sample in `/usr/share/scx_loader/config.toml`). `scxtui`'s
+    unit and D-Bus activation file. Config: `/etc/scx_loader.toml` (sample in `/usr/share/scx_loader/config.toml`). `scxtui`'s
     log view reads journalctl, so it shows nothing on Artix.
   - `scx-loader-openrc`: OpenRC script `/etc/init.d/scx_loader` (`supervise-daemon`, needs dbus,
-    stops with SIGINT like the upstream unit).
+    stops with SIGINT like the upstream unit), and the D-Bus activation file
+    `org.scx.Loader.service`, which runs `rc-service scx_loader start`: the loader starts on demand,
+    supervised by OpenRC. In no runlevel by default.
 - `build.sh`: builds every package in `pkgs/` (or only the `pkgs/<dir>/` arguments) with `makepkg -f`
   (never installs anything), copies the results into `repo/` and indexes them with `repo-add` into
   `repo/zpt-artix.db.tar.zst`. `MAKEPKG_EXTRA` adds makepkg flags. It skips the dep check for

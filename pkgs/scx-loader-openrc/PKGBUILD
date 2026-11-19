@@ -1,14 +1,17 @@
 pkgname=scx-loader-openrc
 pkgver=20261119
-pkgrel=1
-pkgdesc="OpenRC script for scx_loader (scx-tools)"
+pkgrel=2
+pkgdesc="OpenRC script and D-Bus activation for scx_loader (scx-tools)"
 arch=(any)
 url="https://github.com/sched-ext/scx-loader"
 license=('GPL-2.0-only')
 depends=(openrc dbus scx-tools)
-source=(scx_loader.initd)
-sha256sums=('a70edacdb55b27b548b0a22c967aec64b34a6e0cc7d50ab9300a99a6db2b7565')
+source=(scx_loader.initd org.scx.Loader.service)
+sha256sums=('a70edacdb55b27b548b0a22c967aec64b34a6e0cc7d50ab9300a99a6db2b7565'
+            'c1f4f1a611a8b243a84287fab8c63d5fd55e964bc7f2a160f20fd76b031c0556')
 
 package() {
   install -Dm755 scx_loader.initd "${pkgdir}/etc/init.d/scx_loader"
+  # D-Bus activation hands off to OpenRC, so OpenRC supervises the only copy.
+  install -Dm644 org.scx.Loader.service -t "${pkgdir}/usr/share/dbus-1/system-services/"
 }
