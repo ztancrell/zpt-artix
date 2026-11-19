@@ -74,6 +74,33 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
       `updpkgsums`, build, and sort every file the build names onto `_keep` or `_drop` (port it if it
       needs systemd). The build also fails if the `game-performance` port no longer applies. Bump
       `eac-tools` to the same tag.
+  - The homestead X stack, from the owner's forks (each pinned to a commit, pkgver from git), moved
+    from zpt-cachy and built with Artix's default generic x86-64 flags:
+    - `xlibre-xserver-homestead`: the XLibre X server ([xserver](https://github.com/ztancrell/xserver)),
+      one package with the common files and SDK (provides `xlibre-xserver`, `xorg-server` and their
+      `-common`/`-devel`); no Xephyr, Xvfb, Xnest or suid wrapper. Without systemd: needs Artix's
+      `libudev` instead of `systemd-libs`, and its logind support (`-D systemd_logind=true`, as in
+      Artix's own `xlibre-xserver`) talks to elogind over D-Bus. Links no libsystemd.
+    - `xlibre-input-libinput-homestead`: the libinput input driver
+      ([xf86-input-libinput](https://github.com/ztancrell/xf86-input-libinput)). Builds against
+      `xlibre-xserver-homestead`'s SDK (see `build.sh` below).
+    - `openbox-homestead`: Openbox ([openbox-patchwork](https://github.com/ztancrell/openbox-patchwork)),
+      `--enable-debug`, without the GNOME/KDE session files.
+    - `fastcompmgr-homestead`: the X11 compositor ([fastcompmgr](https://github.com/ztancrell/fastcompmgr)).
+    - `tint2-homestead`: the panel ([tint2](https://github.com/ztancrell/tint2)), without `tint2conf`.
+  - `zpt-artix-desktop`: meta-package (no files) for the whole desktop: the homestead X stack,
+    xinit/xrandr/xset, xclip, xdotool, `ly` + `ly-openrc`, session tools (dunst, feh,
+    polkit-gnome, lxappearance-obconf, xdg-user-dirs-gtk, xdg-desktop-portal-gtk, slock, redshift,
+    flameshot, scrot), Thunar with its plugins, tumbler, gvfs and archivers, PipeWire with
+    `pipewire-openrc`/`pipewire-pulse-openrc`/`wireplumber-openrc`, pavucontrol, pasystray,
+    `networkmanager-openrc`, network-manager-applet, nss-mdns, `bluez-openrc`, blueman, kitty,
+    fonts, upower and `power-profiles-daemon-openrc`. No GPU drivers or microcode (per machine).
+    Not in any Artix repo, so left out: wmctrl, obmenu-generator, dex, xcursor-neutral.
+  - `zpt-artix-apps`: meta-package for everyday apps: firefox, thunderbird, qbittorrent, audacious,
+    steam, lutris, mangohud, gamemode, gamescope, protontricks, git, github-cli, htop, fastfetch,
+    ripgrep, flatpak. `steam` is in Artix's `[lib32]` repo, which Artix's default `pacman.conf`
+    leaves off: enable it first. Not in any Artix repo, so left out: obsidian,
+    heroic-games-launcher (both are on Flathub).
 - Mirrored, not built: `linux-cachyos-eac` (7.3.3-2) and `cachyos-eac-signing-key` (1-2) are
   CachyOS's signed packages, copied into `repo/` unchanged with their `.sig` by `mirror-cachyos.sh`.
   CI then deletes CachyOS's `.sig` and signs them with the zpt-artix key, like every other package.
@@ -99,11 +126,15 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
   (never installs anything), copies the results into `repo/` and indexes them with `repo-add` into
   `repo/zpt-artix.db.tar.zst`. `MAKEPKG_EXTRA` adds makepkg flags. It skips the dep check for
   `zpt-artix-*`, `*-dkms` and `*-openrc` directories (their dependencies live only in this repo,
-  or are runtime-only).
+  or are runtime-only). If `pacman.conf` has `repo/` as a `file://` `[zpt-artix]` repo
+  (`container-build.sh` and CI add it), it then indexes what was built and retries the failed
+  packages (again, as long as each round builds something), so a package that builds against another one of this repo
+  (`xlibre-input-libinput-homestead` needs `xlibre-xserver-homestead`) gets it from `repo/`.
 - `container-build.sh`: runs `build.sh` in a fresh `docker.io/artixlinux/artixlinux:base-devel`
   container (rootless podman, `--rm`, this directory mounted), as a build user with your uid, with
   `MAKEPKG_EXTRA="-s --noconfirm"`, so build deps are installed in the container only and packages
-  link against Artix libraries, not the host's.
+  link against Artix libraries, not the host's. It adds `repo/` to the container's `pacman.conf`
+  as the local `[zpt-artix]` repo (unsigned, container only).
 - `test-openrc.sh`: checks an installed OpenRC service, see [Test an OpenRC service](#test-an-openrc-service).
 - `repo/`: the built local repo (not committed).
 - `.github/workflows/repo.yml`: CI, see [CI](#ci).
@@ -148,8 +179,10 @@ service started or stopped as it found it. The boot check stays manual:
 1. builds every package with `build.sh` as a non-root build user, with
    `MAKEPKG_EXTRA="-s --noconfirm -c"` (build deps come from the Artix repos; `-c` deletes each
    package's `src/` and `pkg/` after it builds, to stay within the runner's disk). No build order is
-   needed: `build.sh` skips the dep check for `*-openrc` and `zpt-artix-*`, and `scx-tools` adds
-   `scx-scheds` only at package time;
+   needed: `build.sh` skips the dep check for `*-openrc` and `zpt-artix-*`, `scx-tools` adds
+   `scx-scheds` only at package time, and `build.sh` retries `xlibre-input-libinput-homestead`
+   against `repo/` (added to the container's `pacman.conf` as the local `[zpt-artix]` repo) after
+   `xlibre-xserver-homestead` has built;
 2. runs `mirror-cachyos.sh` (it fails the run unless every CachyOS signature verifies), then deletes
    CachyOS's `.sig` files;
 3. runs `namcap` on every package: report only, in the run's summary page (namcap's errors include
@@ -180,3 +213,23 @@ Add to `/etc/pacman.conf`, after the Artix repos (default `SigLevel`, signatures
 [zpt-artix]
 Server = https://github.com/ztancrell/zpt-artix/releases/download/repo
 ```
+
+## Desktop
+
+With the repo added (above), install the meta-packages. `zpt-artix-apps` needs Artix's `[lib32]`
+repo for `steam`: uncomment it in `/etc/pacman.conf` (or add `[lib32]` with
+`Include = /etc/pacman.d/mirrorlist`), then `sudo pacman -Sy`.
+
+```sh
+sudo pacman -S zpt-artix-desktop zpt-artix-apps
+sudo rc-update add ly default             # login: ly on tty7 (or the tty set in /etc/ly/config.ini)
+sudo rc-update add NetworkManager default
+sudo rc-update add bluetoothd default
+sudo rc-update add power-profiles-daemon default
+```
+
+`ly-openrc`'s service is `ly` (`/etc/init.d/ly`, supervise-daemon runs `/usr/bin/ly-dm` through
+getty/agetty, `provide display-manager`); it conflicts with Artix's other display manager scripts
+(`init-displaymanager`). PipeWire, pipewire-pulse and WirePlumber are OpenRC user services
+(`/etc/user/init.d/`), not system services; how to enable them is not documented here yet. Not yet tested on a running system: the ly login
+into the Openbox session and the user services.

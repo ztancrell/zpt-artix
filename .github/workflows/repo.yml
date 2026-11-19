@@ -37,7 +37,12 @@ jobs:
           chown -R builder .
           # -c deletes each package's src/ and pkg/ after it builds: scx-scheds' src/ alone is ~4 GB.
           # Packages that need other zpt-artix packages need no build order: build.sh skips the dep
-          # check for *-openrc and zpt-artix-*, and scx-tools adds scx-scheds only in package().
+          # check for *-openrc and zpt-artix-*, scx-tools adds scx-scheds only in package(), and
+          # build.sh retries packages that build against another one (xlibre-input-libinput-homestead)
+          # against repo/, added here as a local repo.
+          printf '\n[zpt-artix]\nSigLevel = Optional TrustAll\nServer = file://%s/repo\n' "$PWD" >> /etc/pacman.conf
+          # An empty sync db until build.sh syncs it: pacman -S refuses to run with a repo that has none.
+          tar -czf /var/lib/pacman/sync/zpt-artix.db -T /dev/null
           sudo -H -u builder env MAKEPKG_EXTRA="-s --noconfirm -c" ./build.sh
       - name: Mirror CachyOS's EAC packages
         run: |

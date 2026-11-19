@@ -9,7 +9,8 @@ export PATH=/usr/bin:$PATH  # a non-zstd "zstd" in ~/.local/bin breaks package c
 mkdir -p repo
 failed=
 [ $# -gt 0 ] || set -- pkgs/*/
-for d in "$@"; do
+build_one() {
+  d=$1
   n=$(basename "$d")
   echo "=== $n"
   # Meta-packages and OpenRC script packages depend on packages that live only in this repo, and DKMS
@@ -20,6 +21,17 @@ for d in "$@"; do
   else
     echo "=== $n: FAILED"; failed="$failed $n"
   fi
+}
+for d in "$@"; do build_one "$d"; done
+# Some packages build against another package of this repo (xlibre-input-libinput-homestead needs
+# xlibre-xserver-homestead's SDK) and fail above if built first. When pacman.conf has this repo/ as
+# a file:// [zpt-artix] repo (container-build.sh and CI add it), index what was built and retry the
+# failed ones, so makepkg -s installs those deps from it, as long as each round builds something.
+while [ -n "$failed" ] && pacman-conf --repo zpt-artix Server 2>/dev/null | grep -q '^file://'; do
+  repo-add -R repo/zpt-artix.db.tar.zst repo/*.pkg.tar.zst && sudo pacman -Sy || break
+  retry=$failed; failed=
+  for n in $retry; do build_one "pkgs/$n/"; done
+  [ "$failed" = "$retry" ] && break
 done
 repo-add -R repo/zpt-artix.db.tar.zst repo/*.pkg.tar.zst
 echo "SUMMARY: failed:${failed:- none}"
