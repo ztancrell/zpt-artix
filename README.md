@@ -124,11 +124,14 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
     drivers or microcode (per machine).
   - Apps in no Artix repo that need Electron 43 (Artix's newest is electron42), so they ship as
     upstream's prebuilt binaries with their own bundled Electron, from the AUR's `-bin` PKGBUILD
-    (named in each one's first line), unchanged:
-    - `obsidian-bin` 1.8.10 (AUR; upstream's `.deb`, in `/opt/Obsidian`; proprietary licence). The
-      AUR pins 1.8.10, older than Arch's obsidian 1.15.1 (which needs electron43).
-    - `heroic-games-launcher-bin` 2.22.4 (AUR; upstream's `Heroic-2.22.4-linux-x64.pacman`, in
-      `/opt/Heroic`).
+    (named in each one's first line):
+    - `obsidian-bin` 1.15.1 (proprietary licence): the AUR's PKGBUILD (which pins the older 1.8.10)
+      bumped to Arch's obsidian 1.15.1: upstream's Linux tarball in `/opt/Obsidian`, plus Arch's
+      desktop file, MIME types and licence, all with Arch's sha256sums. `/usr/bin/obsidian` is a
+      symlink; the install script sets `chrome-sandbox` setuid only when unprivileged user
+      namespaces are unavailable.
+    - `heroic-games-launcher-bin` 2.22.4 (AUR, unchanged; upstream's
+      `Heroic-2.22.4-linux-x64.pacman`, in `/opt/Heroic`).
   - `zpt-artix-apps`: meta-package for everyday apps: firefox, thunderbird, `obsidian-bin`,
     qbittorrent, audacious, steam, lutris, `heroic-games-launcher-bin`, mangohud, gamemode,
     gamescope, protontricks, git, github-cli, htop, fastfetch, ripgrep, flatpak. `steam` is in

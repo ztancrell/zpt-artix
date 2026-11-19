@@ -1,14 +1,16 @@
-# Reference: AUR obsidian-bin 1.8.10-4 (not in Arch's repos; unchanged). Upstream's .deb with its bundled
-# Electron: Arch's obsidian 1.15.1 needs electron43, Artix's newest is electron42.
+# Reference: AUR obsidian-bin 1.8.10-4 (not in Arch's repos), bumped to Arch's obsidian 1.15.1-1: upstream's
+# Linux tarball with its bundled Electron (Arch's obsidian needs electron43, Artix's newest is electron42) and
+# Arch's obsidian.desktop, obsidian.xml and LICENSE-Obsidian, all with Arch's sha256sums. Installed into
+# /opt/Obsidian like the AUR package; /usr/bin/obsidian is a packaged symlink instead of one made in the install script.
 # Maintainer: NekoLOvO <nekolyin@qq.com>
 
 pkgname=obsidian-bin
-pkgver=1.8.10
-pkgrel=4
+pkgver=1.15.1
+pkgrel=1
 pkgdesc="A powerful knowledge base that works on top of a local folder of plain text Markdown files. (Official binary package with bundled Electron)"
 arch=('x86_64')
 url="https://github.com/obsidianmd/obsidian-releases/"
-license=('custom')
+license=('LicenseRef-Obsidian')
 depends=(
     'gtk3'
     'libnotify'
@@ -19,17 +21,31 @@ depends=(
     'at-spi2-core'
     'util-linux-libs'
     'libsecret'
+    'hicolor-icon-theme'
 )
 optdepends=('libappindicator-gtk3: for tray support')
 conflicts=('obsidian')
 provides=('obsidian')
 options=(!strip)
-source=("${url}releases/download/v${pkgver}/obsidian_${pkgver}_amd64.deb")
-sha256sums=('da19b2755013e9def37271cf04ce7485c03a22fa02b0951e4108884dcd1bd774')
+source=("${url}releases/download/v${pkgver}/obsidian-${pkgver}.tar.gz"
+        "obsidian.desktop"
+        "obsidian.xml"
+        "LICENSE-Obsidian")
+sha256sums=('09074f0635ecf366307d808d0fec06c01a87a0bcc66da6d34126ceece0eb8519'
+            '55a5d7fa8a1cbbc2c857836cb1504a64235eef071302e203f193c267ce4d997d'
+            'f016fa35f25b7220690f8030bec1514b662bbcb231d3507ec3751d2ade42ba7e'
+            'd9fdc14f9c2fb95bb38310281268fdad413c1b49fa93213df3184f9b0ca1175c')
 install="obsidian.install"
 
 package() {
-    bsdtar -xf "${srcdir}/data.tar.xz" -C "${pkgdir}/"
+    install -dm755 "${pkgdir}/opt"
+    cp -a "${srcdir}/obsidian-${pkgver}" "${pkgdir}/opt/Obsidian"
+    install -dm755 "${pkgdir}/usr/bin"
+    ln -s /opt/Obsidian/obsidian "${pkgdir}/usr/bin/obsidian"
+    install -Dm644 obsidian.desktop -t "${pkgdir}/usr/share/applications/"
+    install -Dm644 obsidian.xml -t "${pkgdir}/usr/share/mime/packages/"
+    install -Dm644 "${pkgdir}/opt/Obsidian/resources/icon.png" "${pkgdir}/usr/share/icons/hicolor/512x512/apps/obsidian.png"
+    install -Dm644 LICENSE-Obsidian -t "${pkgdir}/usr/share/licenses/${pkgname}/"
     install -Dm644 "${pkgdir}/opt/Obsidian/LICENSE.electron.txt" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE.electron.txt"
     install -Dm644 "${pkgdir}/opt/Obsidian/LICENSES.chromium.html" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSES.chromium.html"
 }
