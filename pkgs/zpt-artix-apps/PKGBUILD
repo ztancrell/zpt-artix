@@ -1,13 +1,13 @@
-# Not in Artix's repos (system, world, galaxy, lib32; checked 2026-11-19), so left out:
-# obsidian, heroic-games-launcher. Both need electron43 (Arch's obsidian, AUR heroic-games-launcher);
-# Artix's newest is electron42 (checked 2026-11-19). steam is in lib32, which Artix's default pacman.conf leaves off.
+# obsidian-bin and heroic-games-launcher-bin come from this repo: upstream's prebuilt binaries with their
+# bundled Electron (Arch's obsidian and AUR heroic-games-launcher need electron43; Artix's newest is
+# electron42, checked 2026-11-19). steam is in lib32, which Artix's default pacman.conf leaves off.
 pkgname=zpt-artix-apps
 pkgver=1
-pkgrel=1
-pkgdesc="zpt-artix everyday apps: browser, mail, torrents, music, gaming, dev tools"
+pkgrel=2
+pkgdesc="zpt-artix everyday apps: browser, mail, notes, torrents, music, gaming, dev tools"
 arch=('any')
 url="https://github.com/ztancrell/zpt-artix"
 license=('MIT')
-depends=('firefox' 'thunderbird' 'qbittorrent' 'audacious'
-         'steam' 'lutris' 'mangohud' 'gamemode' 'gamescope' 'protontricks'
+depends=('firefox' 'thunderbird' 'obsidian-bin' 'qbittorrent' 'audacious'
+         'steam' 'lutris' 'heroic-games-launcher-bin' 'mangohud' 'gamemode' 'gamescope' 'protontricks'
          'git' 'github-cli' 'htop' 'fastfetch' 'ripgrep' 'flatpak')

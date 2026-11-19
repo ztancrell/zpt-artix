@@ -122,11 +122,17 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
     `networkmanager-openrc`, network-manager-applet, nss-mdns, `bluez-openrc`, blueman, kitty,
     fonts, the xcursor-neutral cursor theme, upower and `power-profiles-daemon-openrc`. No GPU
     drivers or microcode (per machine).
-  - `zpt-artix-apps`: meta-package for everyday apps: firefox, thunderbird, qbittorrent, audacious,
-    steam, lutris, mangohud, gamemode, gamescope, protontricks, git, github-cli, htop, fastfetch,
-    ripgrep, flatpak. `steam` is in Artix's `[lib32]` repo, which Artix's default `pacman.conf`
-    leaves off: enable it first. Left out: obsidian and heroic-games-launcher (in no Artix repo;
-    Arch's and the AUR's PKGBUILDs need electron43, Artix's newest is electron42; both are on Flathub).
+  - Apps in no Artix repo that need Electron 43 (Artix's newest is electron42), so they ship as
+    upstream's prebuilt binaries with their own bundled Electron, from the AUR's `-bin` PKGBUILD
+    (named in each one's first line), unchanged:
+    - `obsidian-bin` 1.8.10 (AUR; upstream's `.deb`, in `/opt/Obsidian`; proprietary licence). The
+      AUR pins 1.8.10, older than Arch's obsidian 1.15.1 (which needs electron43).
+    - `heroic-games-launcher-bin` 2.22.4 (AUR; upstream's `Heroic-2.22.4-linux-x64.pacman`, in
+      `/opt/Heroic`).
+  - `zpt-artix-apps`: meta-package for everyday apps: firefox, thunderbird, `obsidian-bin`,
+    qbittorrent, audacious, steam, lutris, `heroic-games-launcher-bin`, mangohud, gamemode,
+    gamescope, protontricks, git, github-cli, htop, fastfetch, ripgrep, flatpak. `steam` is in
+    Artix's `[lib32]` repo, which Artix's default `pacman.conf` leaves off: enable it first.
 - Mirrored, not built: `linux-cachyos-eac` (7.3.3-2) and `cachyos-eac-signing-key` (1-2) are
   CachyOS's signed packages, copied into `repo/` unchanged with their `.sig` by `mirror-cachyos.sh`.
   CI then deletes CachyOS's `.sig` and signs them with the zpt-artix key, like every other package.
