@@ -104,6 +104,7 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
   container (rootless podman, `--rm`, this directory mounted), as a build user with your uid, with
   `MAKEPKG_EXTRA="-s --noconfirm"`, so build deps are installed in the container only and packages
   link against Artix libraries, not the host's.
+- `test-openrc.sh`: checks an installed OpenRC service, see [Test an OpenRC service](#test-an-openrc-service).
 - `repo/`: the built local repo (not committed).
 - `.github/workflows/repo.yml`: CI, see [CI](#ci).
 
@@ -121,6 +122,22 @@ example at `https://cdn77.cachyos.org/repo/x86_64/cachyos/`), put it in the `PKG
 `mirror-cachyos.sh`, run `./mirror-cachyos.sh` (needs curl, gpg and repo-add, on any host: it only
 copies files) and commit the changed line. `repo-add -R` deletes the old package file from `repo/`;
 delete its old `.sig` if it is left over.
+
+## Test an OpenRC service
+
+On the Artix machine, with the package installed:
+
+```sh
+sudo ./test-openrc.sh ananicy-cpp
+```
+
+It reads `command`, `supervisor`, `pidfile` and `extra_started_commands`/`extra_commands` from
+`/etc/init.d/<service>` and checks: start (status started, daemon process running), stop (status
+stopped, no daemon left), with `supervisor=supervise-daemon` that a `kill -9` of the daemon is
+respawned with a new PID, and if the script has a `reload` command that it exits 0 and the daemon
+keeps running. It prints one PASS/FAIL line per step, exits non-zero if any failed, and leaves the
+service started or stopped as it found it. The boot check stays manual:
+`rc-update add <service> default`, reboot, `rc-status`.
 
 ## CI
 
