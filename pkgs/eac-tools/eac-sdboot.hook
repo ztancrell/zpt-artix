@@ -1,0 +1,10 @@
+[Trigger]
+Type = Path
+Operation = Install
+Operation = Upgrade
+Target = usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed
+
+[Action]
+Description = Updating the EAC systemd-boot on the ESP...
+When = PostTransaction
+Exec = /usr/lib/eac-tools/eac-sdboot-update

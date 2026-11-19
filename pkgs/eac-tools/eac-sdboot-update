@@ -1,0 +1,13 @@
+#!/bin/bash
+# Pacman hook: after an upgrade, recopy the CachyOS-signed systemd-boot to the ESP, but only
+# where eac-setup already put it (so it never sets up EAC by itself). Same ESP candidates as
+# eac-setup's find_esp.
+set -eu
+src=/usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed
+# shellcheck disable=SC1091
+for dir in "$(set +eu; . /etc/default/limine >/dev/null 2>&1; echo "${ESP_PATH:-}")" /efi /boot /boot/efi; do
+    target=$dir/EFI/cachyos-eac/systemd-bootx64.efi
+    [ -n "$dir" ] && [ -f "$target" ] || continue
+    cmp -s "$src" "$target" || { install -m644 "$src" "$target"; echo "Updated $target"; }
+    exit 0
+done

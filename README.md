@@ -31,14 +31,16 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
     `/usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed`, taken byte-identical from CachyOS's
     `systemd-boot-cachyos-signed` 262.2_1-1 (package pinned by sha256, its signature checked against
     CachyOS's packager key in `prepare()`), never rebuilt. Without that package's systemd dependency
-    and its pacman hook (which uses bootctl): after an upgrade, run `eac-setup` again to copy the new
-    file to the EFI system partition.
+    and its pacman hook (which uses bootctl); `eac-tools` has an Artix hook in its place.
   - `eac-tools`: `eac-setup` and `eac-status` for Easy Anti-Cheat Linux v2, from
     [CachyOS-Settings](https://github.com/CachyOS/CachyOS-Settings) 1.4.4 (tag tarball, sha512
     pinned), ported by `eac-artix.patch`: Limine only (with `limine-mkinitcpio-hook`; the
     systemd-boot and rEFInd paths are removed), `loginctl` (elogind) instead of `systemctl`, the EFI
     system partition found with findmnt/lsblk instead of `bootctl`, and it installs
     `systemd-boot-cachyos-signed-efi`. Needs `limine-mkinitcpio-hook` (galaxy) and elogind.
+    `eac-sdboot.hook` runs `/usr/lib/eac-tools/eac-sdboot-update` after the signed EFI file is
+    installed or upgraded: it recopies it to `<ESP>/EFI/cachyos-eac/systemd-bootx64.efi`, only if
+    eac-setup already put a copy there.
     Setup steps: [CachyOS wiki](https://wiki.cachyos.org/configuration/easy_anti_cheat/).
   - `zpt-artix-settings`: CachyOS's system tuning from
     [CachyOS-Settings](https://github.com/CachyOS/CachyOS-Settings) 1.4.4 (same tag tarball and
@@ -78,6 +80,10 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
   rebuilt. Sources: kernel [linux-cachyos](https://github.com/CachyOS/linux-cachyos)
   (`linux-cachyos-eac`, GPL-2.0), systemd-boot [systemd](https://github.com/systemd/systemd) 262.2
   (LGPL-2.1+).
+- `zpt-artix.asc`: this repo's public signing key (`zpt-artix repo`, ed25519, fingerprint
+  `473D2CE689E0FE660D43FD715566DC3F8C6B2B75`). The private key exists only as the
+  `GPG_PRIVATE_KEY` secret of the GitHub repo, for the planned CI signing; nothing is signed with
+  it yet.
 - `keys/cachyos.asc`: CachyOS's packager key (`CachyOS <admin@cachyos.org>`,
   fingerprint `882DCFE48E2051D48E2562ABF3B607488DB35A47`), byte-identical to
   `/usr/share/pacman/keyrings/cachyos.gpg` from CachyOS's `cachyos-keyring` 20240331-1. pacman checks
