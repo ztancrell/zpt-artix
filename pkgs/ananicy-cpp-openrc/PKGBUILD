@@ -1,13 +1,13 @@
 pkgname=ananicy-cpp-openrc
 pkgver=20261119
-pkgrel=1
+pkgrel=2
 pkgdesc="OpenRC script for ananicy-cpp"
 arch=(any)
 url="https://gitlab.com/ananicy-cpp/ananicy-cpp"
 license=('GPL-3.0-or-later')
 depends=(openrc ananicy-cpp)
 source=(ananicy-cpp.initd)
-sha256sums=('5de1b80647ad24a6404e745121dfc88bf2fd7aa66397e801b0b2d98edbb0a197')
+sha256sums=('a907cf7904c5dd3cfa89534069d7337d1964aa75dcbf13549120d0ea5c95d723')
 
 package() {
   install -Dm755 ananicy-cpp.initd "${pkgdir}/etc/init.d/ananicy-cpp"

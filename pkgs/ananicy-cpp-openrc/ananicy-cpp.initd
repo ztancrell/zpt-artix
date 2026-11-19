@@ -5,6 +5,11 @@ command="/usr/bin/ananicy-cpp"
 command_args="start"
 extra_started_commands="reload"
 
+# Same as the upstream systemd unit (Nice=-5, OOMScoreAdjust=-999). supervise-daemon reads these.
+# Override in /etc/conf.d/ananicy-cpp.
+export SSD_NICELEVEL="${SSD_NICELEVEL:--5}"
+export SSD_OOM_SCORE_ADJ="${SSD_OOM_SCORE_ADJ:--999}"
+
 depend() {
 	need localmount
 }
