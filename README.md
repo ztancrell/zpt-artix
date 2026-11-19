@@ -83,7 +83,8 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
   (LGPL-2.1+).
 - `zpt-artix.asc`: this repo's public signing key (`zpt-artix repo`, ed25519, fingerprint
   `473D2CE689E0FE660D43FD715566DC3F8C6B2B75`). The private key exists only as the
-  `GPG_PRIVATE_KEY` secret of the GitHub repo; CI signs every package and the db with it.
+  `GPG_PRIVATE_KEY` secret of the GitHub repo, its passphrase as `GPG_PASSPHRASE`; CI signs
+  every package and the db with it.
 - `keys/cachyos.asc`: CachyOS's packager key (`CachyOS <admin@cachyos.org>`,
   fingerprint `882DCFE48E2051D48E2562ABF3B607488DB35A47`), byte-identical to
   `/usr/share/pacman/keyrings/cachyos.gpg` from CachyOS's `cachyos-keyring` 20240331-1. Only
@@ -137,7 +138,7 @@ delete its old `.sig` if it is left over.
 3. runs `namcap` on every package: report only, in the run's summary page (namcap's errors include
    false positives, so they don't fail the run);
 4. signs every package and the db with the zpt-artix key (private key in the `GPG_PRIVATE_KEY`
-   secret); `repo-add --verify` checks every package signature;
+   secret, its passphrase in `GPG_PASSPHRASE`); `repo-add --verify` checks every package signature;
 5. only if all of that passed: updates the rolling release [`repo`](https://github.com/ztancrell/zpt-artix/releases/tag/repo)
    in place, so it always mirrors the current repo and is never missing: new packages and `.sig` files
    first, then `zpt-artix.db`/`.files` (+ `.sig`), then it deletes assets no longer in the repo.

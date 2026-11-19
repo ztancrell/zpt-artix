@@ -53,9 +53,15 @@ jobs:
       - name: Sign packages and db
         env:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
           GNUPGHOME=$(mktemp -d)  # separate from export, so a mktemp failure stops the step
           export GNUPGHOME
+          # The key has a passphrase and there is no pinentry here: every gpg call, repo-add's too,
+          # reads it from a file in this throwaway GNUPGHOME.
+          umask 077
+          printf '%s' "$GPG_PASSPHRASE" > "$GNUPGHOME/passphrase"
+          printf 'pinentry-mode loopback\npassphrase-file %s\n' "$GNUPGHOME/passphrase" > "$GNUPGHOME/gpg.conf"
           gpg --batch --import <<< "$GPG_PRIVATE_KEY"
           cd repo
           for f in *.pkg.tar.zst; do gpg --batch -u "$KEY" --detach-sign "$f"; done
