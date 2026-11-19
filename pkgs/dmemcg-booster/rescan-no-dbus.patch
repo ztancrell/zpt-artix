@@ -1,0 +1,242 @@
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -3,113 +3,5 @@
+ version = 4
+ 
+ [[package]]
+-name = "dbus"
+-version = "0.9.10"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "21b3aa68d7e7abee336255bd7248ea965cc393f3e70411135a6f6a4b651345d4"
+-dependencies = [
+- "libc",
+- "libdbus-sys",
+- "windows-sys",
+-]
+-
+-[[package]]
+ name = "dmemcg-booster"
+ version = "0.1.3"
+-dependencies = [
+- "dbus",
+-]
+-
+-[[package]]
+-name = "libc"
+-version = "0.2.182"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "6800badb6cb2082ffd7b6a67e6125bb39f18782f793520caee8cb8846be06112"
+-
+-[[package]]
+-name = "libdbus-sys"
+-version = "0.2.7"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "328c4789d42200f1eeec05bd86c9c13c7f091d2ba9a6ea35acdf51f31bc0f043"
+-dependencies = [
+- "pkg-config",
+-]
+-
+-[[package]]
+-name = "pkg-config"
+-version = "0.3.32"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "7edddbd0b52d732b21ad9a5fab5c704c14cd949e5e9a1ec5929a24fded1b904c"
+-
+-[[package]]
+-name = "windows-sys"
+-version = "0.59.0"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "1e38bc4d79ed67fd075bcc251a1c39b32a1776bbe92e5bef1f0bf1f8c531853b"
+-dependencies = [
+- "windows-targets",
+-]
+-
+-[[package]]
+-name = "windows-targets"
+-version = "0.52.6"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "9b724f72796e036ab90c1021d4780d4d3d648aca59e491e6b98e725b84e99973"
+-dependencies = [
+- "windows_aarch64_gnullvm",
+- "windows_aarch64_msvc",
+- "windows_i686_gnu",
+- "windows_i686_gnullvm",
+- "windows_i686_msvc",
+- "windows_x86_64_gnu",
+- "windows_x86_64_gnullvm",
+- "windows_x86_64_msvc",
+-]
+-
+-[[package]]
+-name = "windows_aarch64_gnullvm"
+-version = "0.52.6"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "32a4622180e7a0ec044bb555404c800bc9fd9ec262ec147edd5989ccd0c02cd3"
+-
+-[[package]]
+-name = "windows_aarch64_msvc"
+-version = "0.52.6"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "09ec2a7bb152e2252b53fa7803150007879548bc709c039df7627cabbd05d469"
+-
+-[[package]]
+-name = "windows_i686_gnu"
+-version = "0.52.6"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "8e9b5ad5ab802e97eb8e295ac6720e509ee4c243f69d781394014ebfe8bbfa0b"
+-
+-[[package]]
+-name = "windows_i686_gnullvm"
+-version = "0.52.6"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "0eee52d38c090b3caa76c563b86c3a4bd71ef1a819287c19d586d7334ae8ed66"
+-
+-[[package]]
+-name = "windows_i686_msvc"
+-version = "0.52.6"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "240948bc05c5e7c6dabba28bf89d89ffce3e303022809e73deaefe4f6ec56c66"
+-
+-[[package]]
+-name = "windows_x86_64_gnu"
+-version = "0.52.6"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "147a5c80aabfbf0c7d901cb5895d1de30ef2907eb21fbbab29ca94c5b08b1a78"
+-
+-[[package]]
+-name = "windows_x86_64_gnullvm"
+-version = "0.52.6"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "24d5b23dc417412679681396f2b49f3de8c1473deb516bd34410872eff51ed0d"
+-
+-[[package]]
+-name = "windows_x86_64_msvc"
+-version = "0.52.6"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -3,5 +3,3 @@
+ version = "0.1.3"
+ edition = "2024"
+ 
+-[dependencies]
+-dbus = "0.9.10"
+--- a/src/main.rs
++++ b/src/main.rs
+@@ -1,11 +1,7 @@
+ use crate::cgroup::CGroup;
+-use std::collections::HashSet;
+ use std::str::FromStr;
+-use std::sync::{Arc, Mutex};
+ use std::time::Duration;
+ 
+-use dbus::blocking::Connection;
+-
+ mod cgroup;
+ 
+ fn user_slice_id(cgroup: &CGroup) -> Option<String> {
+@@ -154,100 +150,14 @@
+     }
+ }
+ 
+-fn handle_new_unit(connection: &Connection, unit_path: String, system: bool) {
+-    let mut cgroup: Option<String> = None;
+-
+-    /* All interfaces that have the ControlGroup property */
+-    let iface_names = [
+-        "org.freedesktop.systemd1.Service",
+-        "org.freedesktop.systemd1.Scope",
+-        "org.freedesktop.systemd1.Slice",
+-        "org.freedesktop.systemd1.Socket",
+-    ];
+-    for iface_name in iface_names.iter() {
+-        let get_cgroup_proxy = connection.with_proxy(
+-            "org.freedesktop.systemd1",
+-            unit_path.as_str(),
+-            Duration::from_secs(1),
+-        );
+-        let res: Result<(dbus::arg::Variant<String>,), dbus::Error> = get_cgroup_proxy.method_call(
+-            "org.freedesktop.DBus.Properties",
+-            "Get",
+-            (iface_name, "ControlGroup"),
+-        );
+-
+-        if let Ok((candidate_cgroup,)) = res {
+-            cgroup = Some(candidate_cgroup.0);
+-            break;
+-        }
+-    }
+-
+-    if let Some(cgroup_path) = cgroup {
+-        let mut cgroup = String::from("/sys/fs/cgroup");
+-        cgroup.push_str(cgroup_path.as_str());
+-        let mut cgroup = CGroup::from_path(std::path::PathBuf::from(cgroup));
+-        propagate_dmem_activation(&mut cgroup, system);
+-    }
+-}
+-
+ fn main() {
+     let system = std::env::args()
+         .into_iter()
+         .any(|a| a == "--use-system-bus");
+ 
+-    let connection = {
+-        if system {
+-            Connection::new_system().expect("Failed to connect to DBus")
+-        } else {
+-            Connection::new_session().expect("Failed to connect to DBus")
+-        }
+-    };
+-
+-    let new_unit_signal =
+-        dbus::message::MatchRule::new_signal("org.freedesktop.systemd1.Manager", "UnitNew");
+-    let unit_removed_signal =
+-        dbus::message::MatchRule::new_signal("org.freedesktop.systemd1.Manager", "UnitRemoved");
+-
+-    let unit_queue: Arc<Mutex<HashSet<String>>> = Arc::new(Mutex::new(HashSet::new()));
+-
+-    let new_unit_queue = unit_queue.clone();
+-    connection
+-        .add_match(new_unit_signal, move |_: (), _, msg| {
+-            let (_, unit): (String, dbus::Path) = msg.read_all().unwrap();
+-            let mut queue = new_unit_queue
+-                .lock()
+-                .expect("Failed to retrieve unit queue!");
+-            queue.insert(unit.to_string());
+-            true
+-        })
+-        .expect("Failed to add match!");
+-
+-    let removed_unit_queue = unit_queue.clone();
+-    connection
+-        .add_match(unit_removed_signal, move |_: (), _, msg| {
+-            let (_, unit): (String, dbus::Path) = msg.read_all().unwrap();
+-            let mut queue = removed_unit_queue
+-                .lock()
+-                .expect("Failed to retrieve unit queue!");
+-            queue.remove(&unit.to_string());
+-            true
+-        })
+-        .expect("Failed to add match!");
+-
+-    /* Now that we're getting notified of new units, go over all existing ones and make sure cgroup
+-     * accounting is enabled.
+-     */
+-    activate_dmem_in_descendants(&mut CGroup::root(), system);
+-
++    /* No systemd on Artix to announce new units: rescan the whole tree every 10 seconds. */
+     loop {
+-        while connection
+-            .process(Duration::from_millis(1000))
+-            .unwrap()
+-        {}
+-        let mut queue = unit_queue.lock().expect("Failed to retrieve unit queue!");
+-        for unit in queue.iter() {
+-            handle_new_unit(&connection, unit.to_string(), system);
+-        }
+-        queue.clear();
++        activate_dmem_in_descendants(&mut CGroup::root(), system);
++        std::thread::sleep(Duration::from_secs(10));
+     }
+ }

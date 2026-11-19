@@ -31,6 +31,18 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
     stops with SIGINT like the upstream unit), and the D-Bus activation file
     `org.scx.Loader.service`, which runs `rc-service scx_loader start`: the loader starts on demand,
     supervised by OpenRC. In no runlevel by default.
+  - `dmemcg-booster`: Valve's dmem cgroup daemon
+    ([dmemcg-booster](https://gitlab.steamos.cloud/holo/dmemcg-booster), 0.1.3, commit `4305d74`,
+    MIT), without the systemd units. It sets `dmem.low` (protected GPU memory) to the full
+    `dmem.capacity` on cgroups, enabling the dmem controller in `cgroup.subtree_control` where needed,
+    and leaves users' own cgroups below `user-<id>.slice` alone. Every cgroup gets the same
+    protection: it does not detect games yet. `rescan-no-dbus.patch`: upstream finds new cgroups
+    through systemd's `UnitNew` D-Bus signal, which Artix never sends, so the patch rescans the whole
+    cgroup tree every 10 seconds instead (same walk as upstream's startup pass, cgroup-writing code
+    unchanged) and drops the D-Bus code and the `dbus` crate: links only glibc and libgcc.
+  - `dmemcg-booster-openrc`: OpenRC script `/etc/init.d/dmemcg-booster` (`supervise-daemon`, the
+    system instance, needs `cgroups`). Output to `/var/log/dmemcg-booster.log`. In no runlevel by
+    default: `rc-update add dmemcg-booster default`.
   - `systemd-boot-cachyos-signed-efi`: the CachyOS-signed systemd-boot EFI file
     `/usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed`, taken byte-identical from CachyOS's
     `systemd-boot-cachyos-signed` 262.2_1-1 (package pinned by sha256, its signature checked against

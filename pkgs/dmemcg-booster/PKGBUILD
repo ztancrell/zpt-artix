@@ -1,0 +1,34 @@
+# Reference: CachyOS dmemcg-booster PKGBUILD, without the systemd units: rescan-no-dbus.patch
+# replaces the systemd D-Bus signal loop. OpenRC script in dmemcg-booster-openrc.
+pkgname=dmemcg-booster
+pkgver=0.1.3
+_commit=4305d7438ca81a5854fc1f62ead89eedd9fc0f0f
+pkgrel=1
+pkgdesc="Sets dmem cgroup protection (dmem.low) for GPU memory, rescanning the cgroup tree every 10 seconds"
+arch=(x86_64)
+url="https://gitlab.steamos.cloud/holo/dmemcg-booster"
+license=('MIT')
+depends=(glibc libgcc)
+makedepends=(cargo)
+optdepends=('dmemcg-booster-openrc: OpenRC service')
+source=("${url}/-/archive/${_commit}/${pkgname}-${_commit}.tar.gz"
+        rescan-no-dbus.patch)
+sha512sums=('df04d9e8dac6607559dd162bf1c06fe9c983d71a0a26f0bd8c5984d1ff771b307330e0e4e170874d5ed41929e631183439c7ee17cf699cc4d19ca1c2707d307e'
+            '463b9791c7fcde036b7c9618fcec7a2780045dc3aba8c5dc3097e7baa9ef8738211c2967e6fa349394a713a6f6212b785d8856d86904f88ab76e430eefc9f154')
+
+prepare() {
+  # Upstream finds new cgroups through systemd's UnitNew D-Bus signal. Artix has no systemd, so
+  # rescan the whole tree every 10 seconds instead; this also drops the dbus crate (no libdbus link).
+  patch -d "${pkgname}-${_commit}" -Np1 -i ../rescan-no-dbus.patch
+}
+
+build() {
+  cd "${pkgname}-${_commit}"
+  cargo build --frozen --release
+}
+
+package() {
+  cd "${pkgname}-${_commit}"
+  install -Dm755 target/release/dmemcg-booster "${pkgdir}/usr/bin/dmemcg-booster"
+  install -Dm644 LICENSE -t "${pkgdir}/usr/share/licenses/${pkgname}/"
+}

@@ -1,0 +1,14 @@
+pkgname=dmemcg-booster-openrc
+pkgver=20261119
+pkgrel=1
+pkgdesc="OpenRC script for dmemcg-booster"
+arch=(any)
+url="https://gitlab.steamos.cloud/holo/dmemcg-booster"
+license=('MIT')
+depends=(openrc dmemcg-booster)
+source=(dmemcg-booster.initd)
+sha256sums=('71143da65352852cd392d81dc34784eca7b21c2e1f2150ca7232ec5f51f359d3')
+
+package() {
+  install -Dm755 dmemcg-booster.initd "${pkgdir}/etc/init.d/dmemcg-booster"
+}
