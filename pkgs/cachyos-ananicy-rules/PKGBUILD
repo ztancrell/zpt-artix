@@ -1,0 +1,18 @@
+# Reference: CachyOS cachyos-ananicy-rules (installed the same way as upstream's `make install`).
+pkgname=cachyos-ananicy-rules
+pkgver=1.1.49
+pkgrel=1
+pkgdesc="CachyOS ananicy-cpp rules: nice, I/O and scheduler settings per process type"
+arch=(any)
+url="https://github.com/CachyOS/ananicy-rules"
+license=('GPL-3.0-only')
+optdepends=('ananicy-cpp: daemon that applies these rules')
+backup=(etc/ananicy.d/ananicy.conf)
+source=("${pkgname}-${pkgver}.tar.gz::${url}/archive/refs/tags/${pkgver}.tar.gz")
+sha512sums=('09a9231bfdbf41173d4dbfa315c4e7a507834d5bb79188fe5ae17cbb6bac38b66dc78f1185b216e454d74b5c21b6560076d233a3db61fe25fd06253557852ba8')
+
+package() {
+  cd "ananicy-rules-${pkgver}"
+  install -dm755 "${pkgdir}/etc/ananicy.d"
+  cp -R --no-preserve=ownership *.cgroups *.types ananicy.conf 00-default "${pkgdir}/etc/ananicy.d/"
+}

@@ -13,6 +13,10 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
     `/etc/ananicy.d`.
   - `ananicy-cpp-openrc`: OpenRC script `/etc/init.d/ananicy-cpp` (`supervise-daemon`,
     `rc-service ananicy-cpp reload` reloads the rules).
+  - `cachyos-ananicy-rules`: CachyOS's ananicy-cpp rules
+    ([ananicy-rules](https://github.com/CachyOS/ananicy-rules), release 1.1.49) in `/etc/ananicy.d`.
+    `ananicy.conf` is a backup file: if ananicy-cpp already generated one, the CachyOS one lands as
+    `ananicy.conf.pacnew`.
 - `build.sh`: builds every package in `pkgs/` (or only the `pkgs/<dir>/` arguments) with `makepkg -f`
   (never installs anything), copies the results into `repo/` and indexes them with `repo-add` into
   `repo/zpt-artix.db.tar.zst`. `MAKEPKG_EXTRA` adds makepkg flags. It skips the dep check for
