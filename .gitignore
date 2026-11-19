@@ -1,0 +1,7 @@
+repo/
+pkgs/*/src/
+pkgs/*/pkg/
+pkgs/*/*/
+*.pkg.tar.*
+*.log
+pkgs/*/*.tar.*

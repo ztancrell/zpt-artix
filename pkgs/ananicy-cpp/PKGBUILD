@@ -1,0 +1,35 @@
+# Reference: Arch/AUR ananicy-cpp PKGBUILD, built without systemd (no libsystemd, no .service file).
+pkgname=ananicy-cpp
+pkgver=1.2.0
+pkgrel=1
+pkgdesc="Ananicy Cpp is a full rewrite of Ananicy in C++, featuring lower CPU and RAM usage"
+arch=(x86_64)
+url="https://gitlab.com/ananicy-cpp/ananicy-cpp"
+license=('GPL-3.0-or-later')
+depends=(libfmt.so libspdlog.so libelf zlib libbpf pcre2)
+makedepends=(cmake ninja clang nlohmann-json bpf)
+optdepends=('ananicy-cpp-openrc: OpenRC service')
+source=("https://gitlab.com/ananicy-cpp/${pkgname}/-/archive/v${pkgver}/${pkgname}-v${pkgver}.tar.gz")
+sha512sums=('2fa805989b2c3090ec748f7881f45f188b671886286c939db25dab6fe71dac34e7f2546fb6b51d2377a9f6e266488a9bafe2e2bd3e86a6cde8ea298c7580cd54')
+
+build() {
+  # 1.2.0 misses includes that GCC 16's libstdc++ no longer pulls in transitively
+  CXXFLAGS+=" -include cstdint -include cstring -include unistd.h"
+  cmake -S "${pkgname}-v${pkgver}" -B build -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DUSE_EXTERNAL_SPDLOG=ON \
+    -DUSE_EXTERNAL_JSON=ON \
+    -DUSE_EXTERNAL_FMTLIB=ON \
+    -DENABLE_SYSTEMD=OFF \
+    -DUSE_BPF_PROC_IMPL=ON \
+    -DBPF_BUILD_LIBBPF=OFF \
+    -DENABLE_REGEX_SUPPORT=ON \
+    -DVERSION="${pkgver}"
+  cmake --build build --target ananicy-cpp
+}
+
+package() {
+  DESTDIR="${pkgdir}" cmake --install build --component Runtime
+  install -dm755 "${pkgdir}/etc/ananicy.d"
+}

@@ -1,0 +1,16 @@
+#!/usr/bin/openrc-run
+
+supervisor=supervise-daemon
+command="/usr/bin/ananicy-cpp"
+command_args="start"
+extra_started_commands="reload"
+
+depend() {
+	need localmount
+}
+
+reload() {
+	ebegin "Reloading ${RC_SVCNAME}"
+	"$command" --reload
+	eend $?
+}
