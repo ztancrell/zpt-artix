@@ -1,0 +1,38 @@
+--- a/src/platform/linux/singleton_process.cpp
++++ b/src/platform/linux/singleton_process.cpp
+@@ -3,6 +3,7 @@
+ #include <cerrno>
+ #include <chrono>
+ #include <fcntl.h> /* For O_* constants */
++#include <sys/file.h> /* flock */
+ #include <sys/ipc.h>
+ #include <sys/mman.h>
+ #include <sys/shm.h>
+@@ -42,14 +43,23 @@
+ 
+ bool SingletonProcess::try_create() noexcept {
+   const mode_t unix_perm = 0644;
+-  m_mode = O_RDWR | O_CREAT | O_EXCL;
++  m_mode = O_RDWR | O_CREAT;
+ 
+-  // Try to create shared memory
++  // Open (or create) the shared memory object and hold an exclusive flock on
++  // it. The kernel drops the lock when the process dies, even on SIGKILL, so a
++  // stale object left by a killed instance no longer blocks a new start.
+   m_handle = shm_open(m_filename.data(), m_mode, unix_perm);
+   if (m_handle == -1) {
+-    if (errno != EEXIST)
+-      spdlog::error(fmt::format("Could not create: {}",
++    spdlog::error(fmt::format("Could not create: {}",
++                              std::string_view{std::strerror(errno)}));
++    return false;
++  }
++  if (::flock(m_handle, LOCK_EX | LOCK_NB) != 0) {
++    if (errno != EWOULDBLOCK)
++      spdlog::error(fmt::format("Could not lock: {}",
+                                 std::string_view{std::strerror(errno)}));
++    ::close(m_handle);
++    m_handle = -1;
+     return false;
+   }
+   // If successful change real permissions

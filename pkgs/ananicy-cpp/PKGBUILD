@@ -1,7 +1,7 @@
 # Reference: Arch/AUR ananicy-cpp PKGBUILD, built without systemd (no libsystemd, no .service file).
 pkgname=ananicy-cpp
 pkgver=1.2.0
-pkgrel=1
+pkgrel=2
 pkgdesc="Ananicy Cpp is a full rewrite of Ananicy in C++, featuring lower CPU and RAM usage"
 arch=(x86_64)
 url="https://gitlab.com/ananicy-cpp/ananicy-cpp"
@@ -9,8 +9,16 @@ license=('GPL-3.0-or-later')
 depends=(libfmt.so libspdlog.so libelf zlib libbpf pcre2)
 makedepends=(cmake ninja clang nlohmann-json bpf)
 optdepends=('ananicy-cpp-openrc: OpenRC service')
-source=("https://gitlab.com/ananicy-cpp/${pkgname}/-/archive/v${pkgver}/${pkgname}-v${pkgver}.tar.gz")
-sha512sums=('2fa805989b2c3090ec748f7881f45f188b671886286c939db25dab6fe71dac34e7f2546fb6b51d2377a9f6e266488a9bafe2e2bd3e86a6cde8ea298c7580cd54')
+source=("https://gitlab.com/ananicy-cpp/${pkgname}/-/archive/v${pkgver}/${pkgname}-v${pkgver}.tar.gz"
+        singleton-flock.patch)
+sha512sums=('2fa805989b2c3090ec748f7881f45f188b671886286c939db25dab6fe71dac34e7f2546fb6b51d2377a9f6e266488a9bafe2e2bd3e86a6cde8ea298c7580cd54'
+            '9d7134340488e03efe54fe9d17edf1a5c676b97207b6038030eb483778ae5032f443128121ecfeb5d4c84f270a4993f2712ff02635336b54dd93e557b0c117e1')
+
+prepare() {
+  # The "already running" check (shm_open O_EXCL of /dev/shm/AnanicyCppMutex) outlives a kill -9,
+  # so supervise-daemon's respawns all exit 1. Hold a flock on it instead: the kernel drops it on exit.
+  patch -d "${pkgname}-v${pkgver}" -Np1 -i ../singleton-flock.patch
+}
 
 build() {
   # 1.2.0 misses includes that GCC 16's libstdc++ no longer pulls in transitively

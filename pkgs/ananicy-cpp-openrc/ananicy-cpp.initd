@@ -4,6 +4,9 @@ supervisor=supervise-daemon
 command="/usr/bin/ananicy-cpp"
 command_args="start"
 extra_started_commands="reload"
+# Keep the daemon's output, so a failed start or respawn says why.
+output_log="/var/log/ananicy-cpp.log"
+error_log="/var/log/ananicy-cpp.log"
 
 # Same as the upstream systemd unit (Nice=-5, OOMScoreAdjust=-999). supervise-daemon reads these.
 # Override in /etc/conf.d/ananicy-cpp.

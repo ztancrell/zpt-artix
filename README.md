@@ -10,9 +10,13 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
   - `ananicy-cpp`: auto nice daemon ([ananicy-cpp](https://gitlab.com/ananicy-cpp/ananicy-cpp),
     release 1.2.0), built without systemd (`-DENABLE_SYSTEMD=OFF`: no libsystemd link, no
     `.service` file), with the BPF process listener and regex rule support. Ships no rules: put them in
-    `/etc/ananicy.d`.
+    `/etc/ananicy.d`. `singleton-flock.patch`: upstream's "already running" check creates
+    `/dev/shm/AnanicyCppMutex` exclusively and deletes it only on a clean exit, so after a `kill -9`
+    or crash every start failed with `Ananicy Cpp is already running!` until reboot. The patch holds
+    a `flock` on that file instead, which the kernel drops when the process dies.
   - `ananicy-cpp-openrc`: OpenRC script `/etc/init.d/ananicy-cpp` (`supervise-daemon`,
-    `rc-service ananicy-cpp reload` reloads the rules).
+    `rc-service ananicy-cpp reload` reloads the rules). The daemon's stdout and stderr go to
+    `/var/log/ananicy-cpp.log`.
   - `cachyos-ananicy-rules`: CachyOS's ananicy-cpp rules
     ([ananicy-rules](https://github.com/CachyOS/ananicy-rules), release 1.1.49) in `/etc/ananicy.d`.
     `ananicy.conf` is a backup file: if ananicy-cpp already generated one, the CachyOS one lands as
@@ -165,9 +169,10 @@ sudo ./test-openrc.sh ananicy-cpp
 It reads `command`, `supervisor`, `pidfile` and `extra_started_commands`/`extra_commands` from
 `/etc/init.d/<service>` and checks: start (status started, daemon process running), stop (status
 stopped, no daemon left), with `supervisor=supervise-daemon` that a `kill -9` of the daemon is
-respawned with a new PID, and if the script has a `reload` command that it exits 0 and the daemon
-keeps running. It prints one PASS/FAIL line per step, exits non-zero if any failed, and leaves the
-service started or stopped as it found it. The boot check stays manual:
+respawned with a new PID that is still alive 2 seconds later, and if the script has a `reload`
+command that it exits 0 and the daemon keeps running. It prints one PASS/FAIL line per step, exits
+non-zero if any failed, and leaves the service started or stopped as it found it (started also
+means the daemon process is running). The boot check stays manual:
 `rc-update add <service> default`, reboot, `rc-status`.
 
 ## CI

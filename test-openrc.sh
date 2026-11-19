@@ -44,7 +44,9 @@ if [ "$supervisor" = supervise-daemon ]; then
   [ -n "$old" ] && kill -9 "$old"
   sleep 5
   new=$(dpid)
-  respawned() { [ -n "$old" ] && [ -n "$new" ] && [ "$old" != "$new" ]; }
+  # An instance that exits right away (and gets respawned again) would have a new PID by now.
+  sleep 2
+  respawned() { [ -n "$old" ] && [ -n "$new" ] && [ "$old" != "$new" ] && [ "$(dpid)" = "$new" ]; }
   step="respawn after kill -9 (old ${old:-none}, new ${new:-none})"; check respawned
 fi
 
@@ -55,6 +57,8 @@ case " $extra " in *" reload "*)
 esac
 
 if [ $was = started ]; then rc-service "$svc" start; else rc-service "$svc" stop; fi >/dev/null 2>&1
-step="restored to $was"; check $was
+# status can still say started while supervise-daemon is giving up, so check the daemon too.
+restored() { if [ $was = started ]; then sleep 1; started && running; else stopped; fi; }
+step="restored to $was"; check restored
 echo "Boot check is manual: rc-update add $svc default, reboot, then rc-status shows $svc started."
 exit $failed
