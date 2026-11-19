@@ -1,0 +1,30 @@
+# Reference: CachyOS systemd-boot-cachyos-signed 262.2_1-1. Only its CachyOS-signed EFI file, unchanged
+# (never rebuilt, same path), without the systemd dependency and the bootctl-based pacman hook.
+pkgname=systemd-boot-cachyos-signed-efi
+_pkgfile=systemd-boot-cachyos-signed-262.2_1-1-x86_64.pkg.tar.zst
+pkgver=262.2_1
+pkgrel=1
+pkgdesc="systemd-boot EFI file signed with the CachyOS Secure Boot key, for the Easy Anti-Cheat boot entry"
+arch=(x86_64)
+url="https://github.com/CachyOS/linux-cachyos"
+license=('LGPL-2.1-or-later')
+# The .sig is renamed so makepkg doesn't check it against your keyring; prepare() checks it.
+# cachyos-key links to ../../keys/cachyos.asc, CachyOS's packager key (see mirror-cachyos.sh).
+source=("https://cdn77.cachyos.org/repo/x86_64/cachyos/${_pkgfile}"
+        "${_pkgfile}.pgpsig::https://cdn77.cachyos.org/repo/x86_64/cachyos/${_pkgfile}.sig"
+        cachyos-key)
+noextract=("${_pkgfile}")
+sha256sums=('5553a8bf9a99c9d92414414e9914fb035608aebf009c379af0d367257aadfca6'
+            '3ff0a93582f6fc8addf31c83b0fdd780a9a361d9c56dab183af4ee9b33a503fa'
+            '7f17cd0469e2b986d6c11ad8481a67705a20c5f968b198321a603567c4005576')
+
+prepare() {
+  # Same check as mirror-cachyos.sh: a good signature by CachyOS's packager key, by full fingerprint.
+  gpg --dearmor < cachyos-key > cachyos.gpg
+  gpgv --status-fd 1 --keyring "${srcdir}/cachyos.gpg" "${_pkgfile}.pgpsig" "${_pkgfile}" 2>/dev/null \
+    | grep -q '^\[GNUPG:\] VALIDSIG .* 882DCFE48E2051D48E2562ABF3B607488DB35A47$'
+}
+
+package() {
+  bsdtar -xf "${_pkgfile}" -C "${pkgdir}" usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed
+}

@@ -27,6 +27,35 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
     stops with SIGINT like the upstream unit), and the D-Bus activation file
     `org.scx.Loader.service`, which runs `rc-service scx_loader start`: the loader starts on demand,
     supervised by OpenRC. In no runlevel by default.
+  - `systemd-boot-cachyos-signed-efi`: the CachyOS-signed systemd-boot EFI file
+    `/usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed`, taken byte-identical from CachyOS's
+    `systemd-boot-cachyos-signed` 262.2_1-1 (package pinned by sha256, its signature checked against
+    CachyOS's packager key in `prepare()`), never rebuilt. Without that package's systemd dependency
+    and its pacman hook (which uses bootctl): after an upgrade, run `eac-setup` again to copy the new
+    file to the EFI system partition.
+  - `eac-tools`: `eac-setup` and `eac-status` for Easy Anti-Cheat Linux v2, from
+    [CachyOS-Settings](https://github.com/CachyOS/CachyOS-Settings) 1.4.4 (tag tarball, sha512
+    pinned), ported by `eac-artix.patch`: Limine only (with `limine-mkinitcpio-hook`; the
+    systemd-boot and rEFInd paths are removed), `loginctl` (elogind) instead of `systemctl`, the EFI
+    system partition found with findmnt/lsblk instead of `bootctl`, and it installs
+    `systemd-boot-cachyos-signed-efi`. Needs `limine-mkinitcpio-hook` (galaxy) and elogind.
+    Setup steps: [CachyOS wiki](https://wiki.cachyos.org/configuration/easy_anti_cheat/).
+- Mirrored, not built: `linux-cachyos-eac` (7.3.3-2) and `cachyos-eac-signing-key` (1-2) are
+  CachyOS's signed packages, copied into `repo/` unchanged with their `.sig` by `mirror-cachyos.sh`.
+  The kernel and the systemd-boot file must keep CachyOS's Secure Boot signature, so they are never
+  rebuilt. Sources: kernel [linux-cachyos](https://github.com/CachyOS/linux-cachyos)
+  (`linux-cachyos-eac`, GPL-2.0), systemd-boot [systemd](https://github.com/systemd/systemd) 262.2
+  (LGPL-2.1+).
+- `keys/cachyos.asc`: CachyOS's packager key (`CachyOS <admin@cachyos.org>`,
+  fingerprint `882DCFE48E2051D48E2562ABF3B607488DB35A47`), byte-identical to
+  `/usr/share/pacman/keyrings/cachyos.gpg` from CachyOS's `cachyos-keyring` 20240331-1. pacman checks
+  the mirrored packages' `.sig` files, so add the key once on Artix (only the key, never the CachyOS
+  repo): `sudo pacman-key --add keys/cachyos.asc && sudo pacman-key --lsign-key 882DCFE48E2051D48E2562ABF3B607488DB35A47`.
+- `mirror-cachyos.sh`: downloads the packages pinned in its `PKGS` line and their `.sig` from a
+  CachyOS mirror (x86_64 `cachyos` repo; `MIRROR` overrides it), verifies each signature with gpgv
+  against `keys/cachyos.asc` by full fingerprint, refuses on any failure (nothing is copied), then
+  copies the files unchanged into `repo/` and runs `repo-add`. No headers, NVIDIA, ZFS or r8125
+  packages (module signatures are enforced in the EAC boot).
 - `build.sh`: builds every package in `pkgs/` (or only the `pkgs/<dir>/` arguments) with `makepkg -f`
   (never installs anything), copies the results into `repo/` and indexes them with `repo-add` into
   `repo/zpt-artix.db.tar.zst`. `MAKEPKG_EXTRA` adds makepkg flags. It skips the dep check for
@@ -46,3 +75,9 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
 ```
 
 Needs podman. Don't run `build.sh` directly on a non-Artix host.
+
+New EAC kernel: look up the version CachyOS ships (`linux-cachyos-eac` in the `cachyos` repo, for
+example at `https://cdn77.cachyos.org/repo/x86_64/cachyos/`), put it in the `PKGS` line of
+`mirror-cachyos.sh`, run `./mirror-cachyos.sh` (needs curl, gpg and repo-add, on any host: it only
+copies files) and commit the changed line. `repo-add -R` deletes the old package file from `repo/`;
+delete its old `.sig` if it is left over.

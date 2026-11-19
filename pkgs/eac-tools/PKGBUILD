@@ -1,0 +1,25 @@
+# Reference: CachyOS cachyos-settings 1:1.4.4-1 (its eac-setup and eac-status, byte-identical to the
+# 1.4.4 tag), ported by eac-artix.patch: Limine only, loginctl (elogind) for systemctl, no bootctl,
+# zpt-artix package names.
+pkgname=eac-tools
+pkgver=1.4.4
+pkgrel=1
+pkgdesc="eac-setup and eac-status from CachyOS-Settings: set up and check Easy Anti-Cheat Linux v2 (Limine)"
+arch=(any)
+url="https://github.com/CachyOS/CachyOS-Settings"
+license=('GPL-3.0-only')
+depends=(bash efibootmgr elogind limine-mkinitcpio-hook openssl sbctl sbsigntools tpm2-tools util-linux)
+source=("${pkgname}-${pkgver}.tar.gz::${url}/archive/refs/tags/${pkgver}.tar.gz"
+        eac-artix.patch)
+sha512sums=('00465af01472fccb43643b811f59f3e7f8b060d8c6c426df035702eae42f3eeeae69720dd393c1aedf54d83690ab91e85515242c5ee74802a3bcf1d4951319f9'
+            'fdd09b31046260337cd097893b06761c063d79c04ccca2c0751c2f60a1ef6665539a58d520a1906447a1c58b38f5a47088a902732727bf9551890936101c9b01')
+
+prepare() {
+  cd "CachyOS-Settings-${pkgver}"
+  patch -Np1 -i ../eac-artix.patch
+}
+
+package() {
+  cd "CachyOS-Settings-${pkgver}"
+  install -Dm755 usr/bin/eac-setup usr/bin/eac-status -t "${pkgdir}/usr/bin/"
+}
