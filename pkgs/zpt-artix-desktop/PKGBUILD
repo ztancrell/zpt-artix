@@ -1,21 +1,21 @@
 # wmctrl, obmenu-generator, dex and xcursor-neutral are in no Artix repo; they come from this repo.
 pkgname=zpt-artix-desktop
 pkgver=1
-pkgrel=2
+pkgrel=3
 pkgdesc="zpt-artix desktop: the homestead X11 stack, ly login, session tools, Thunar, PipeWire, NetworkManager, Bluetooth"
 arch=('any')
 url="https://github.com/ztancrell/zpt-artix"
 license=('MIT')
 depends=('xlibre-xserver-homestead' 'xlibre-input-libinput-homestead'
          'openbox-homestead' 'fastcompmgr-homestead' 'tint2-homestead'
-         'xorg-xinit' 'xorg-xrandr' 'xorg-xset' 'xclip' 'xdotool' 'wmctrl'
+         'xorg-xinit' 'xorg-xrandr' 'xorg-xset' 'xorg-xkill' 'xclip' 'xdotool' 'wmctrl'
          'ly' 'ly-openrc'
          'obmenu-generator' 'dex' 'dunst' 'feh' 'polkit-gnome' 'lxappearance-obconf' 'xdg-user-dirs-gtk'
          'xdg-desktop-portal-gtk' 'slock' 'redshift' 'flameshot' 'scrot'
          'thunar' 'thunar-archive-plugin' 'thunar-media-tags-plugin' 'thunar-volman' 'tumbler'
          'ffmpegthumbnailer' 'gvfs' 'gvfs-mtp' 'gvfs-smb' 'xarchiver' 'unzip' 'unrar'
          'pipewire' 'pipewire-pulse' 'pipewire-alsa' 'wireplumber'
-         'pipewire-openrc' 'pipewire-pulse-openrc' 'wireplumber-openrc' 'pavucontrol' 'pasystray'
+         'pipewire-openrc' 'pipewire-pulse-openrc' 'wireplumber-openrc' 'pavucontrol' 'pasystray' 'alsa-utils'
          'networkmanager-openrc' 'network-manager-applet' 'nss-mdns' 'bluez-openrc' 'blueman'
          'kitty' 'awesome-terminal-fonts' 'cantarell-fonts' 'wqy-zenhei' 'xcursor-neutral' 'upower'
          'power-profiles-daemon-openrc')

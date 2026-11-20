@@ -115,11 +115,12 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
     - `xcursor-neutral` 1.13a (AUR): source from the mirror its PKGBUILD names, same sha256
       (distribute.kde.org no longer serves it).
   - `zpt-artix-desktop`: meta-package (no files) for the whole desktop: the homestead X stack,
-    xinit/xrandr/xset, xclip, xdotool, wmctrl, `ly` + `ly-openrc`, session tools (obmenu-generator,
+    xinit/xrandr/xset/xkill, xclip, xdotool, wmctrl, `ly` + `ly-openrc`, session tools (obmenu-generator,
     dex, dunst, feh,
     polkit-gnome, lxappearance-obconf, xdg-user-dirs-gtk, xdg-desktop-portal-gtk, slock, redshift,
     flameshot, scrot), Thunar with its plugins, tumbler, gvfs and archivers, PipeWire with
     `pipewire-openrc`/`pipewire-pulse-openrc`/`wireplumber-openrc`, pavucontrol, pasystray,
+    alsa-utils (amixer, for the volume keys),
     `networkmanager-openrc`, network-manager-applet, nss-mdns, `bluez-openrc`, blueman, kitty,
     fonts, the xcursor-neutral cursor theme, upower and `power-profiles-daemon-openrc`. No GPU
     drivers or microcode (per machine).
@@ -268,5 +269,8 @@ sudo rc-update add power-profiles-daemon default
 `ly-openrc`'s service is `ly` (`/etc/init.d/ly`, supervise-daemon runs `/usr/bin/ly-dm` through
 getty/agetty, `provide display-manager`); it conflicts with Artix's other display manager scripts
 (`init-displaymanager`). PipeWire, pipewire-pulse and WirePlumber are OpenRC user services
-(`/etc/user/init.d/`), not system services; how to enable them is not documented here yet. Not yet tested on a running system: the ly login
-into the Openbox session and the user services.
+(`/etc/user/init.d/`), not system services: `pam_openrc` (in `/etc/pam.d/system-login`, which ly's PAM
+config reaches through `login`) starts the user's default runlevel at login. The Artix Plasma ISO
+install had already added all three (`rc-update --user show`); elsewhere, `rc-update --user add
+pipewire default` (and the same for `pipewire-pulse` and `wireplumber`). Not yet tested on a running
+system: the ly login into the Openbox session.
