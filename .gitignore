@@ -2,6 +2,7 @@ repo/
 pkgs/*/src/
 pkgs/*/pkg/
 pkgs/*/*/
+!pkgs/*/keys/
 *.pkg.tar.*
 *.log
 pkgs/*/*.tar.*

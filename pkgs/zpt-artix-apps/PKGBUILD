@@ -3,13 +3,31 @@
 # electron42, checked 2026-11-19). steam is in lib32, which Artix's default pacman.conf leaves off.
 # No browser: the owner uses Mozilla's self-updating Firefox Nightly tarball (no Artix package), and the
 # Homestead rc.xml binds firefox-nightly.
+# vkbasalt, simple-mtpfs, jmtpfs, amdtop, python311, libpng12, parole-git, ocs-url and
+# bpftune-git are AUR packages built by this repo. optdepends lists what a stock zpt-artix install can't
+# resolve: Arch [extra]/[multilib] packages, and AUR apps this repo doesn't build (see README).
 pkgname=zpt-artix-apps
 pkgver=1
-pkgrel=3
+pkgrel=4
 pkgdesc="zpt-artix everyday apps: mail, notes, torrents, music, gaming, dev tools"
 arch=('any')
 url="https://github.com/ztancrell/zpt-artix"
 license=('MIT')
 depends=('thunderbird' 'obsidian-bin' 'qbittorrent' 'audacious'
          'steam' 'lutris' 'heroic-games-launcher-bin' 'mangohud' 'gamemode' 'gamescope' 'protontricks'
-         'git' 'github-cli' 'htop' 'fastfetch' 'ripgrep' 'flatpak')
+         'git' 'github-cli' 'htop' 'fastfetch' 'ripgrep' 'flatpak'
+         'lact' 'lact-openrc' 'vkbasalt' 'simple-mtpfs' 'jmtpfs' 'amdtop'
+         'python311' 'libpng12' 'parole-git' 'ocs-url' 'bpftune-git')
+optdepends=('ghidra: reverse engineering (needs Arch [extra]; see README)'
+            'gitea-cli: Gitea command line (needs Arch [extra]; see README)'
+            'fsarchiver: filesystem backups (needs Arch [extra]; see README)'
+            'efitools: Secure Boot key tools (needs Arch [extra]; see README)'
+            'nano-syntax-highlighting: nano syntax files (needs Arch [extra]; see README)'
+            'lib32-mangohud: MangoHud for 32-bit games (needs Arch [multilib]; see README)'
+            'electron-cash-git: Bitcoin Cash wallet, AUR (needs Arch [extra]; see README)'
+            'arch-update: update notifier, AUR (needs Arch [extra]; see README)'
+            'bpftune-openrc: OpenRC service for bpftune'
+            'lib32-vkbasalt: vkbasalt for 32-bit games, AUR (not built here; see README)'
+            'reshade-shaders-git: ReShade shaders for vkbasalt, AUR (not built here; see README)'
+            'virtio-win: Windows VirtIO drivers ISO, AUR (not built here; see README)'
+            'synergy3-bin: keyboard and mouse sharing, AUR (not built here; see README)')

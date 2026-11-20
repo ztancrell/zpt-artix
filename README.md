@@ -254,9 +254,24 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
       namespaces are unavailable.
     - `heroic-games-launcher-bin` 2.22.4 (AUR, unchanged; upstream's
       `Heroic-2.22.4-linux-x64.pacman`, in `/opt/Heroic`).
+  - Apps and libraries in no Arch or Artix repo, built from the AUR's PKGBUILD (named in each
+    one's first line), unchanged: `vkbasalt` 0.3.2.10, `simple-mtpfs` 0.4.0,
+    `jmtpfs` 0.5, `amdtop` 0.2.6, `python311` 3.11.18, `libpng12` 1.2.59, `ocs-url` 3.1.0, and
+    the `-git` packages `parole-git` and `bpftune-git`, which build upstream's newest commit (their
+    version changes with each build; `bpftune-git` installs a systemd unit, unused on OpenRC).
   - `zpt-artix-apps`: meta-package for everyday apps: thunderbird, `obsidian-bin`,
     qbittorrent, audacious, steam, lutris, `heroic-games-launcher-bin`, mangohud, gamemode,
-    gamescope, protontricks, git, github-cli, htop, fastfetch, ripgrep, flatpak. `steam` is in
+    gamescope, protontricks, git, github-cli, htop, fastfetch, ripgrep, flatpak, lact with
+    `lact-openrc`, and the AUR packages above. Its optdepends name the rest, which a stock
+    zpt-artix install can't resolve: ghidra, gitea-cli, fsarchiver, efitools,
+    nano-syntax-highlighting, lib32-mangohud (Arch `[extra]`/`[multilib]` only), the AUR's
+    `electron-cash-git` and `arch-update` (they need Arch `[extra]` packages; `arch-update` also
+    depends on `systemd`), `bpftune-openrc`, and four AUR packages this repo doesn't build:
+    `lib32-vkbasalt` (its build deps are in `[lib32]`, which the build container doesn't enable),
+    `reshade-shaders-git` (its build downloads 45 third-party shader packs from unpinned branch
+    zips, with no checksums and licences that weren't reviewed), `virtio-win` (an 877 MB ISO) and
+    `synergy3-bin` (proprietary; its build fetches Symless's package with a download token). Install
+    those from the AUR with an AUR helper. `steam` is in
     Artix's `[lib32]` repo, which Artix's default `pacman.conf` leaves off: enable it first. No
     browser since 1-3: Firefox Nightly has no Artix package, so it is Mozilla's tarball
     (`https://download.mozilla.org/?product=firefox-nightly-latest-ssl&os=linux64&lang=en-US`)
@@ -287,7 +302,9 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
   packages (module signatures are enforced in the EAC boot).
 - `build.sh`: builds every package in `pkgs/` (or only the `pkgs/<dir>/` arguments) with `makepkg -f`
   (never installs anything), copies the results into `repo/` and indexes them with `repo-add` into
-  `repo/zpt-artix.db.tar.zst`. `MAKEPKG_EXTRA` adds makepkg flags. It skips the dep check for
+  `repo/zpt-artix.db.tar.zst`. `MAKEPKG_EXTRA` adds makepkg flags. Before makepkg it imports the package's `keys/pgp/*.asc` (the AUR
+  layout; `libpng12` has one) into the build user's gpg keyring, so makepkg can check the source
+  signature against `validpgpkeys` in a fresh container. It skips the dep check for
   `zpt-artix-*`, `*-dkms` and `*-openrc` directories (their dependencies live only in this repo,
   or are runtime-only). If `pacman.conf` has `repo/` as a `file://` `[zpt-artix]` repo
   (`container-build.sh` and CI add it), it then indexes what was built and retries the failed
