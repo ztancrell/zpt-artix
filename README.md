@@ -355,6 +355,11 @@ sudo rc-update add bluetoothd default
 sudo rc-update add power-profiles-daemon default
 ```
 
+After an install from an Artix ISO, remove `/etc/local.d/0-remove-sessions.start` (unowned, left by
+the installer). It deletes `/usr/share/xsessions/openbox.desktop` at every boot, so ly stops listing
+Openbox. It is meant to run once and delete itself, but a stray `fi` (a syntax error) stops the shell
+before that line. Then `sudo pacman -S openbox-homestead` brings the session file back.
+
 `ly-openrc`'s service is `ly` (`/etc/init.d/ly`, supervise-daemon runs `/usr/bin/ly-dm` through
 getty/agetty, `provide display-manager`); it conflicts with Artix's other display manager scripts
 (`init-displaymanager`). PipeWire, pipewire-pulse and WirePlumber are OpenRC user services
