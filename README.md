@@ -146,8 +146,23 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
       openbox-session, whose environment keeps the `XCURSOR_SIZE` set here. `HOMESTEAD_TINT2RC` points
       the autostart's tint2 at `/usr/share/homestead/hidpi/tint2rc`: homestead-theme's tint2rc from
       the same homestead commit with only `scale_relative_to_screen_height = 800` (2x on a 1600-pixel
-      panel; the build fails if any other line differs). Install with `sudo pacman -S homestead-hidpi`
-      and log in again. Depends on homestead-theme and xorg-xrdb.
+      panel; the build fails if any other line differs). Openbox ignores `Xft.dpi` (measured on the
+      MacBook: 20 px menu rows with about 12 px text, 9 pt at 96 DPI), so the script also exports
+      `XDG_CONFIG_DIRS=/usr/share/homestead/hidpi/xdg:${XDG_CONFIG_DIRS:-/etc/xdg}`. Openbox takes the
+      first `openbox/rc.xml` it finds in `~/.config`, then in `XDG_CONFIG_DIRS` in order, so it reads
+      `/usr/share/homestead/hidpi/xdg/openbox/rc.xml`: homestead-theme's rc.xml with every font
+      `<size>` doubled (8 to 16, 9 to 18) and the theme set to `Homestead-HiDPI` (the build fails if any
+      other line differs). A `~/.config/openbox/rc.xml` still overrides it. Its menu.xml and the
+      session's autostart and environment still come from `/etc/xdg`: openbox-session and
+      openbox-autostart read `/etc/xdg/openbox` by path, not through `XDG_CONFIG_DIRS`.
+      `/usr/share/themes/Homestead-HiDPI` is the Homestead Openbox theme with every integer (pixel)
+      value in its themerc doubled (`menu.overlap.x`, `menu.separator.padding.height`,
+      `menu.border.width`, `padding.width`, `padding.height`, `window.titlebar.padding.width`,
+      `window.titlebar.padding.height`, `window.button.width`, `window.button.height`,
+      `window.handle.width`, `osd.border.width`; zeros stay 0, colours and textures unchanged), every
+      `.xbm` button scaled 2x by pixel doubling (the build fails unless each is twice its source's
+      width and height), and its index.theme renamed. Install with `sudo pacman -S homestead-hidpi`
+      and log in again. Depends on homestead-theme and xorg-xrdb; builds with python.
   - Desktop tools in no Artix repo, built from Arch's or the AUR's PKGBUILD (named in each one's
     first line), unchanged unless noted:
     - `wmctrl` 1.07 (Arch): tarball from Debian's archive, same sha512 (web.archive.org serves

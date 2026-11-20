@@ -1,21 +1,23 @@
 # 2x scaling for the Homestead desktop on Retina panels (2560x1600 MacBook Pro). Not in zpt-artix-desktop.
 # The tint2rc is homestead-theme's at the same homestead commit with only scale_relative_to_screen_height
 # changed (800: 2x on a 1600-pixel-high panel); keep _commit in step with homestead-theme.
+# Openbox ignores Xft.dpi, so the Openbox rc.xml (font sizes doubled, theme Homestead-HiDPI) and the
+# Homestead-HiDPI Openbox theme (pixel sizes and buttons doubled) are generated from the same commit too.
 pkgname=homestead-hidpi
 _commit=654d35f49c08dd4243b8d6c915c9f054e7365d7c
 pkgver=r23.g654d35f
-pkgrel=1
-pkgdesc="2x HiDPI settings for the Homestead desktop (GDK, Xft.dpi, cursor size, scaled tint2)"
+pkgrel=2
+pkgdesc="2x HiDPI settings for the Homestead desktop (GDK, Xft.dpi, cursor size, scaled tint2 and Openbox)"
 arch=('any')
 url="https://github.com/ztancrell/zpt-artix"
 license=('MIT')
 depends=('homestead-theme' 'xorg-xrdb')
-makedepends=('git')
+makedepends=('git' 'python')
 backup=('etc/X11/xinit/xinitrc.d/50-homestead-hidpi.sh')
 source=("homestead::git+https://github.com/ztancrell/homestead.git#commit=${_commit}"
         50-homestead-hidpi.sh)
 sha256sums=('SKIP'
-            '7236b5961508644d6d1ba9bd60f4cd2cd03db7d6dd67698a2d3f74d2db870bc7')
+            '557a6d23720f2c966c4226f526faae9f5b5c9035f41220d9ec449d942e9919f1')
 
 pkgver() {
   cd homestead
@@ -28,9 +30,62 @@ build() {
   # Exactly that one line changed.
   [ "$(diff homestead/theme/tint2/tint2rc tint2rc | grep -c '^[<>]')" = 2 ]
   diff homestead/theme/tint2/tint2rc tint2rc | grep -qx '> scale_relative_to_screen_height = 800'
+
+  # rc.xml: every <size> inside a <font> doubled, the theme renamed; nothing else changed.
+  local rc=homestead/theme/openbox/rc.xml
+  awk '/<font place=/ {f=1} /<\/font>/ {f=0}
+       f && match($0, /<size>[0-9]+<\/size>/) {
+         n = substr($0, RSTART + 6, RLENGTH - 13); sub(/<size>[0-9]+<\/size>/, "<size>" n * 2 "</size>") }
+       /<theme>/ {t=1}
+       t && sub(/<name>Homestead<\/name>/, "<name>Homestead-HiDPI</name>") {t=0}
+       {print}' "$rc" > rc.xml
+  local fonts; fonts=$(sed -n '/<font place=/,/<\/font>/p' "$rc" | grep -c '<size>')
+  [ "$(diff "$rc" rc.xml | grep -c '^<')" = $((fonts + 1)) ]
+  [ "$(diff "$rc" rc.xml | grep '^>' | grep -cE '^> *(<size>[0-9]+</size>|<name>Homestead-HiDPI</name>)$')" = $((fonts + 1)) ]
+
+  # Homestead-HiDPI Openbox theme: every integer (pixel) value in themerc doubled, colours and textures
+  # unchanged; every .xbm button scaled 2x by pixel doubling.
+  local ob=homestead/theme/themes/Homestead
+  rm -rf Homestead-HiDPI; mkdir -p Homestead-HiDPI/openbox-3
+  sed 's/^Name=Homestead$/Name=Homestead-HiDPI/' $ob/index.theme > Homestead-HiDPI/index.theme
+  [ "$(diff $ob/index.theme Homestead-HiDPI/index.theme | grep -c '^[<>]')" = 2 ]
+  awk -F': ' '$2 ~ /^-?[0-9]+$/ {print $1 ": " $2 * 2; next} {print}' \
+    $ob/openbox-3/themerc > Homestead-HiDPI/openbox-3/themerc
+  # Only pixel keys changed (zeros stay the same).
+  [ "$(diff $ob/openbox-3/themerc Homestead-HiDPI/openbox-3/themerc | grep '^>' | grep -vcE '^> [a-z.]*(width|height|overlap\.x): -?[0-9]+$')" = 0 ]
+  python - $ob/openbox-3 Homestead-HiDPI/openbox-3 <<'PY'
+import pathlib, re, sys
+src, dst = map(pathlib.Path, sys.argv[1:])
+for f in sorted(src.glob('*.xbm')):
+    t = f.read_text()
+    name = re.search(r'#define (\w+)_width', t)[1]
+    w, h = (int(re.search(r'_%s (\d+)' % k, t)[1]) for k in ('width', 'height'))
+    b = [int(x, 16) for x in re.findall(r'0x([0-9a-fA-F]{2})', t)]
+    assert len(b) == (w + 7) // 8 * h, f
+    rows = [[b[y * ((w + 7) // 8) + x // 8] >> x % 8 & 1 for x in range(w)] for y in range(h)]
+    out = []
+    for r in rows:
+        r = [p for p in r for _ in (0, 1)]
+        line = [sum(r[i + j] << j for j in range(min(8, len(r) - i))) for i in range(0, len(r), 8)]
+        out += line + line
+    hex_ = ', '.join('0x%02x' % v for v in out)
+    (dst / f.name).write_text('#define %s_width %d\n#define %s_height %d\nstatic unsigned char %s_bits[] = {\n   %s };\n'
+                              % (name, 2 * w, name, 2 * h, name, hex_))
+PY
+  [ "$(ls $ob/openbox-3)" = "$(ls Homestead-HiDPI/openbox-3)" ]
+  local x k
+  for x in $ob/openbox-3/*.xbm; do
+    for k in width height; do
+      [ "$(sed -n "s/^#define .*_$k //p" Homestead-HiDPI/openbox-3/${x##*/})" = \
+        $(( 2 * $(sed -n "s/^#define .*_$k //p" "$x") )) ]
+    done
+  done
 }
 
 package() {
   install -Dm755 50-homestead-hidpi.sh "$pkgdir"/etc/X11/xinit/xinitrc.d/50-homestead-hidpi.sh
   install -Dm644 tint2rc "$pkgdir"/usr/share/homestead/hidpi/tint2rc
+  install -Dm644 rc.xml "$pkgdir"/usr/share/homestead/hidpi/xdg/openbox/rc.xml
+  install -d "$pkgdir"/usr/share/themes
+  cp -r Homestead-HiDPI "$pkgdir"/usr/share/themes/
 }
