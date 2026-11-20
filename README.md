@@ -332,5 +332,6 @@ getty/agetty, `provide display-manager`); it conflicts with Artix's other displa
 (`/etc/user/init.d/`), not system services: `pam_openrc` (in `/etc/pam.d/system-login`, which ly's PAM
 config reaches through `login`) starts the user's default runlevel at login. The Artix Plasma ISO
 install had already added all three (`rc-update --user show`); elsewhere, `rc-update --user add
-pipewire default` (and the same for `pipewire-pulse` and `wireplumber`). Not yet tested on a running
-system: the ly login into the Openbox session.
+pipewire default` (and the same for `pipewire-pulse` and `wireplumber`). Tested on the 2014 MacBook
+Pro (2026-11-19): ly logs into the Openbox session; with `homestead-hidpi`, the tint2 panel,
+cursor, Openbox menu and title bars show at 2x.
