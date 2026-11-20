@@ -368,4 +368,6 @@ config reaches through `login`) starts the user's default runlevel at login. The
 install had already added all three (`rc-update --user show`); elsewhere, `rc-update --user add
 pipewire default` (and the same for `pipewire-pulse` and `wireplumber`). Tested on the 2014 MacBook
 Pro (2026-11-19): ly logs into the Openbox session; with `homestead-hidpi`, the tint2 panel,
-cursor, Openbox menu and title bars show at 2x.
+cursor, Openbox menu and title bars show at 2x. After a reboot (2026-11-20): the GRUB menu
+shows the 2x `artix-hidpi` theme, the console uses `ter-v32b`, ly still lists Openbox with
+`0-remove-sessions.start` removed, and the volume and screen brightness popups show after login.
