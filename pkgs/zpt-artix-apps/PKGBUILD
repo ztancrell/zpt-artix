@@ -1,13 +1,15 @@
 # obsidian-bin and heroic-games-launcher-bin come from this repo: upstream's prebuilt binaries with their
 # bundled Electron (Arch's obsidian and AUR heroic-games-launcher need electron43; Artix's newest is
 # electron42, checked 2026-11-19). steam is in lib32, which Artix's default pacman.conf leaves off.
+# No browser: the owner uses Mozilla's self-updating Firefox Nightly tarball (no Artix package), and the
+# Homestead rc.xml binds firefox-nightly.
 pkgname=zpt-artix-apps
 pkgver=1
-pkgrel=2
-pkgdesc="zpt-artix everyday apps: browser, mail, notes, torrents, music, gaming, dev tools"
+pkgrel=3
+pkgdesc="zpt-artix everyday apps: mail, notes, torrents, music, gaming, dev tools"
 arch=('any')
 url="https://github.com/ztancrell/zpt-artix"
 license=('MIT')
-depends=('firefox' 'thunderbird' 'obsidian-bin' 'qbittorrent' 'audacious'
+depends=('thunderbird' 'obsidian-bin' 'qbittorrent' 'audacious'
          'steam' 'lutris' 'heroic-games-launcher-bin' 'mangohud' 'gamemode' 'gamescope' 'protontricks'
          'git' 'github-cli' 'htop' 'fastfetch' 'ripgrep' 'flatpak')

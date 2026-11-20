@@ -250,10 +250,16 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
       namespaces are unavailable.
     - `heroic-games-launcher-bin` 2.22.4 (AUR, unchanged; upstream's
       `Heroic-2.22.4-linux-x64.pacman`, in `/opt/Heroic`).
-  - `zpt-artix-apps`: meta-package for everyday apps: firefox, thunderbird, `obsidian-bin`,
+  - `zpt-artix-apps`: meta-package for everyday apps: thunderbird, `obsidian-bin`,
     qbittorrent, audacious, steam, lutris, `heroic-games-launcher-bin`, mangohud, gamemode,
     gamescope, protontricks, git, github-cli, htop, fastfetch, ripgrep, flatpak. `steam` is in
-    Artix's `[lib32]` repo, which Artix's default `pacman.conf` leaves off: enable it first.
+    Artix's `[lib32]` repo, which Artix's default `pacman.conf` leaves off: enable it first. No
+    browser since 1-3: Firefox Nightly has no Artix package, so it is Mozilla's tarball
+    (`https://download.mozilla.org/?product=firefox-nightly-latest-ssl&os=linux64&lang=en-US`)
+    unpacked into a user-writable folder such as `~/.local/share/firefox-nightly`, where it updates
+    itself, with `~/.local/bin/firefox-nightly` linked to its `firefox` (the name the Homestead
+    rc.xml runs) and a `firefox-nightly.desktop`. Upgrading from 1-2 leaves firefox installed;
+    `sudo pacman -Rs firefox` removes it.
 - Mirrored, not built: `linux-cachyos-eac` (7.3.3-2) and `cachyos-eac-signing-key` (1-2) are
   CachyOS's signed packages, copied into `repo/` unchanged with their `.sig` by `mirror-cachyos.sh`.
   CI then deletes CachyOS's `.sig` and signs them with the zpt-artix key, like every other package.
