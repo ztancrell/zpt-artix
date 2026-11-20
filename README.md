@@ -163,6 +163,11 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
       `.xbm` button scaled 2x by pixel doubling (the build fails unless each is twice its source's
       width and height), and its index.theme renamed. Install with `sudo pacman -S homestead-hidpi`
       and log in again. Depends on homestead-theme and xorg-xrdb; builds with python.
+      The package can't reach the text console, where ly draws with the console font; that is a
+      manual step on each Retina machine (`/etc/conf.d/consolefont` belongs to `openrc`):
+      set `consolefont="ter-v32b"` there (Terminus 16x32, from `terminus-font`), then
+      `sudo rc-update add consolefont boot`. It applies to tty1-12 from the next boot. The GRUB
+      menu is still unscaled.
   - Desktop tools in no Artix repo, built from Arch's or the AUR's PKGBUILD (named in each one's
     first line), unchanged unless noted:
     - `wmctrl` 1.07 (Arch): tarball from Debian's archive, same sha512 (web.archive.org serves
