@@ -1,0 +1,42 @@
+# The Homestead look as system defaults, from homestead's theme/ (the owner's ~/.config made machine-neutral).
+# Files in ~/.config override these. /usr/share/icons/default belongs to Artix's default-cursors, so the
+# cursor is set by XCURSOR_THEME in /etc/xdg/openbox/environment and by the GTK settings instead.
+# Licence: the GTK/Openbox theme and configs are the owner's; KDE-classic's source and licence are unknown;
+# six of the eight sounds are sound-theme-freedesktop's files (see its CREDITS), desktop-login.oga and
+# device-added.oga are of unknown origin.
+pkgname=homestead-theme
+_commit=30bbd7391c8016495108a86ae25f58fe0a9904c8
+pkgver=r22.g30bbd73
+pkgrel=1
+pkgdesc="Homestead desktop theme and default Openbox, tint2, kitty, obmenu-generator and GTK settings"
+arch=('any')
+url="https://github.com/ztancrell/homestead"
+license=('LicenseRef-unknown')
+# xed and audacious: rc.xml key bindings; the rest of what autostart and rc.xml run comes with zpt-artix-desktop.
+depends=('breeze-icons' 'ttf-dejavu' 'xcursor-neutral' 'xed' 'audacious')
+optdepends=('zenity: calendar on a click on the tint2 clock'
+            'geany: editor for the menu entries that edit the obmenu-generator config')
+makedepends=('git')
+backup=('etc/gtk-3.0/settings.ini' 'etc/gtk-4.0/settings.ini'
+        'etc/xdg/openbox/rc.xml' 'etc/xdg/openbox/menu.xml' 'etc/xdg/openbox/autostart'
+        'etc/xdg/openbox/environment' 'etc/xdg/tint2/tint2rc'
+        'etc/xdg/kitty/kitty.conf' 'etc/xdg/kitty/homestead.conf'
+        'etc/xdg/obmenu-generator/config.pl' 'etc/xdg/obmenu-generator/schema.pl')
+source=("homestead::git+https://github.com/ztancrell/homestead.git#commit=${_commit}")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd homestead
+  printf "r%s.g%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+}
+
+package() {
+  cd homestead/theme
+  install -d "$pkgdir"/usr/share/{themes,icons,homestead} "$pkgdir"/etc/xdg
+  cp -r themes/Homestead "$pkgdir"/usr/share/themes/
+  cp -r icons/{Homestead,Homestead-Cursor,KDE-classic} "$pkgdir"/usr/share/icons/
+  cp -r sounds scripts "$pkgdir"/usr/share/homestead/
+  install -Dm644 gtk-3.0/settings.ini "$pkgdir"/etc/gtk-3.0/settings.ini
+  install -Dm644 gtk-4.0/settings.ini "$pkgdir"/etc/gtk-4.0/settings.ini
+  cp -r openbox tint2 kitty obmenu-generator "$pkgdir"/etc/xdg/
+}

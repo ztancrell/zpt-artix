@@ -102,15 +102,45 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
       ([xf86-input-libinput](https://github.com/ztancrell/xf86-input-libinput)). Builds against
       `xlibre-xserver-homestead`'s SDK (see `build.sh` below).
     - `openbox-homestead`: Openbox ([openbox-patchwork](https://github.com/ztancrell/openbox-patchwork)),
-      `--enable-debug`, without the GNOME/KDE session files.
+      `--enable-debug`, without the GNOME/KDE session files and without `/etc/xdg/openbox` (from
+      `homestead-theme`).
     - `fastcompmgr-homestead`: the X11 compositor ([fastcompmgr](https://github.com/ztancrell/fastcompmgr)).
-    - `tint2-homestead`: the panel ([tint2](https://github.com/ztancrell/tint2)), without `tint2conf`.
+    - `tint2-homestead`: the panel ([tint2](https://github.com/ztancrell/tint2)), without `tint2conf`
+      and without `/etc/xdg/tint2/tint2rc` (from `homestead-theme`).
+  - The Homestead look, from [homestead](https://github.com/ztancrell/homestead)'s `theme/` and
+    `wallpapers/` (pinned to a commit like the X stack). Homestead is the default look for every
+    user; a user's own files in `~/.config` override it:
+    - `homestead-theme`: the Homestead GTK 3/4 and Openbox theme (`/usr/share/themes/Homestead`),
+      the `Homestead` icon theme (Breeze Dark) and `Homestead-Cursor` (the `KDE-classic` cursors, then
+      Neutral), all in `/usr/share/icons`; GTK settings in `/etc/gtk-3.0` and `/etc/gtk-4.0`; and the
+      defaults in `/etc/xdg`: `openbox/` (rc.xml, menu.xml, autostart, environment), `tint2/tint2rc`,
+      `kitty/` (kitty.conf, homestead.conf) and `obmenu-generator/` (config.pl, schema.pl), with
+      sounds and scripts in `/usr/share/homestead`. These are the owner's configs without his monitor
+      layout, Synergy or redshift script, with `loginctl suspend`. Artix's `default-cursors` owns
+      `/usr/share/icons/default`, so the cursor comes from `XCURSOR_THEME` in
+      `/etc/xdg/openbox/environment` and the GTK settings. Override rules: `~/.config/openbox/rc.xml`
+      and `menu.xml` replace the system ones, but `~/.config/openbox/autostart` runs after the system
+      autostart, not instead of it; the autostart starts tint2 with `/etc/xdg/tint2/tint2rc`, and on
+      first login copies `/etc/xdg/obmenu-generator` to `~/.config/obmenu-generator` (obmenu-generator
+      reads only that and would otherwise write xterm defaults); `~/.config/gtk-3.0/settings.ini` (Plasma
+      writes one) overrides the GTK settings. Depends on breeze-icons, ttf-dejavu, xcursor-neutral, and
+      xed and audacious (key bindings); zenity (tint2 clock) and geany (menu's config editor) are
+      optional. The `firefox-nightly` key binding has no Artix package. Licence unknown: the theme is
+      the owner's, `KDE-classic`'s source is unknown, six sounds are sound-theme-freedesktop's.
+      Upgrading from `openbox-homestead` 2, `tint2-homestead` 1 or `obmenu-generator` 1 leaves their
+      stock files in place (pacman keeps existing `/etc` files) and installs Homestead's as `.pacnew`:
+      move each `.pacnew` over its file (`/etc/xdg/openbox/*`, `/etc/xdg/tint2/tint2rc`,
+      `/etc/xdg/obmenu-generator/schema.pl`). A fresh install gets Homestead's directly.
+    - `homestead-wallpapers`: 255 wallpapers in `/usr/share/backgrounds/homestead/` (artstation,
+      berserk, sst, templars, wingedhussars; 300M), which the autostart's feh picks from at random.
+      Most are other artists' work; licences unknown.
   - Desktop tools in no Artix repo, built from Arch's or the AUR's PKGBUILD (named in each one's
     first line), unchanged unless noted:
     - `wmctrl` 1.07 (Arch): tarball from Debian's archive, same sha512 (web.archive.org serves
       Arch's URL decompressed).
     - `dex` 0.10.1 (Arch).
-    - `obmenu-generator` 0.93 (AUR); its `openbox` dependency is met by `openbox-homestead`.
+    - `obmenu-generator` 0.93 (AUR); its `openbox` dependency is met by `openbox-homestead`. Without
+      `/etc/xdg/obmenu-generator/schema.pl`, which comes from `homestead-theme`.
     - `perl-linux-desktopfiles` 0.26 (AUR), needed by `obmenu-generator`.
     - `xcursor-neutral` 1.13a (AUR): source from the mirror its PKGBUILD names, same sha256
       (distribute.kde.org no longer serves it).
@@ -122,7 +152,8 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
     `pipewire-openrc`/`pipewire-pulse-openrc`/`wireplumber-openrc`, pavucontrol, pasystray,
     alsa-utils (amixer, for the volume keys),
     `networkmanager-openrc`, network-manager-applet, nss-mdns, `bluez-openrc`, blueman, kitty,
-    fonts (with ttf-dejavu, the kitty config's DejaVu Sans Mono), the xcursor-neutral cursor theme, upower and `power-profiles-daemon-openrc`. No GPU
+    fonts (with ttf-dejavu, the kitty config's DejaVu Sans Mono), the xcursor-neutral cursor theme,
+    `homestead-theme` and `homestead-wallpapers`, upower and `power-profiles-daemon-openrc`. No GPU
     drivers or microcode (per machine).
   - Apps in no Artix repo that need Electron 43 (Artix's newest is electron42), so they ship as
     upstream's prebuilt binaries with their own bundled Electron, from the AUR's `-bin` PKGBUILD

@@ -1,0 +1,22 @@
+# The owner's wallpapers, from homestead's wallpapers/. Most are other artists' work; licences unknown.
+pkgname=homestead-wallpapers
+_commit=30bbd7391c8016495108a86ae25f58fe0a9904c8
+pkgver=r22.g30bbd73
+pkgrel=1
+pkgdesc="Homestead wallpapers (artstation, berserk, sst, templars, wingedhussars)"
+arch=('any')
+url="https://github.com/ztancrell/homestead"
+license=('LicenseRef-unknown')
+makedepends=('git')
+source=("homestead::git+https://github.com/ztancrell/homestead.git#commit=${_commit}")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd homestead
+  printf "r%s.g%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+}
+
+package() {
+  install -d "$pkgdir"/usr/share/backgrounds
+  cp -r homestead/wallpapers "$pkgdir"/usr/share/backgrounds/homestead
+}
