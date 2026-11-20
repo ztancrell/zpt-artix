@@ -5,8 +5,8 @@
 # six of the eight sounds are sound-theme-freedesktop's files (see its CREDITS), desktop-login.oga and
 # device-added.oga are of unknown origin.
 pkgname=homestead-theme
-_commit=30bbd7391c8016495108a86ae25f58fe0a9904c8
-pkgver=r22.g30bbd73
+_commit=654d35f49c08dd4243b8d6c915c9f054e7365d7c
+pkgver=r23.g654d35f
 pkgrel=1
 pkgdesc="Homestead desktop theme and default Openbox, tint2, kitty, obmenu-generator and GTK settings"
 arch=('any')

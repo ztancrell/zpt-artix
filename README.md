@@ -118,9 +118,10 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
       sounds and scripts in `/usr/share/homestead`. These are the owner's configs without his monitor
       layout, Synergy or redshift script, with `loginctl suspend`. Artix's `default-cursors` owns
       `/usr/share/icons/default`, so the cursor comes from `XCURSOR_THEME` in
-      `/etc/xdg/openbox/environment` and the GTK settings. Override rules: `~/.config/openbox/rc.xml`
+      `/etc/xdg/openbox/environment` (with `XCURSOR_SIZE` 24 unless already set) and the GTK settings. Override rules: `~/.config/openbox/rc.xml`
       and `menu.xml` replace the system ones, but `~/.config/openbox/autostart` runs after the system
-      autostart, not instead of it; the autostart starts tint2 with `/etc/xdg/tint2/tint2rc`, and on
+      autostart, not instead of it; the autostart starts tint2 with `$HOMESTEAD_TINT2RC` if set, else
+      `/etc/xdg/tint2/tint2rc`, and on
       first login copies `/etc/xdg/obmenu-generator` to `~/.config/obmenu-generator` (obmenu-generator
       reads only that and would otherwise write xterm defaults); `~/.config/gtk-3.0/settings.ini` (Plasma
       writes one) overrides the GTK settings. Depends on breeze-icons, ttf-dejavu, xcursor-neutral, and
@@ -134,6 +135,19 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
     - `homestead-wallpapers`: 255 wallpapers in `/usr/share/backgrounds/homestead/` (artstation,
       berserk, sst, templars, wingedhussars; 300M), which the autostart's feh picks from at random.
       Most are other artists' work; licences unknown.
+    - `homestead-hidpi`: 2x scaling for Retina machines only (the 2560x1600 MacBook Pro); not in
+      `zpt-artix-desktop`. `/etc/X11/xinit/xinitrc.d/50-homestead-hidpi.sh`, which ly's
+      `/etc/ly/setup.sh` sources at X login, exports `GDK_SCALE=2` and `GDK_DPI_SCALE=0.5` (GTK draws
+      at 2x without doubling its fonts again), `XCURSOR_SIZE=48` and `HOMESTEAD_TINT2RC`, and merges
+      `Xft.dpi: 192` and `Xcursor.size: 48` with xrdb (fonts, and Qt 6, which scales from `Xft.dpi`, so
+      no `QT_SCALE_FACTOR`: it would scale twice). setup.sh runs xinitrc.d first, then merges
+      `/etc/X11/Xresources` and `~/.Xresources` (a merge changes only the keys those files set, so
+      they keep the hidpi values unless they set `Xft.dpi` or `Xcursor.size`), then starts
+      openbox-session, whose environment keeps the `XCURSOR_SIZE` set here. `HOMESTEAD_TINT2RC` points
+      the autostart's tint2 at `/usr/share/homestead/hidpi/tint2rc`: homestead-theme's tint2rc from
+      the same homestead commit with only `scale_relative_to_screen_height = 800` (2x on a 1600-pixel
+      panel; the build fails if any other line differs). Install with `sudo pacman -S homestead-hidpi`
+      and log in again. Depends on homestead-theme and xorg-xrdb.
   - Desktop tools in no Artix repo, built from Arch's or the AUR's PKGBUILD (named in each one's
     first line), unchanged unless noted:
     - `wmctrl` 1.07 (Arch): tarball from Debian's archive, same sha512 (web.archive.org serves

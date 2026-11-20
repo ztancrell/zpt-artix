@@ -1,0 +1,36 @@
+# 2x scaling for the Homestead desktop on Retina panels (2560x1600 MacBook Pro). Not in zpt-artix-desktop.
+# The tint2rc is homestead-theme's at the same homestead commit with only scale_relative_to_screen_height
+# changed (800: 2x on a 1600-pixel-high panel); keep _commit in step with homestead-theme.
+pkgname=homestead-hidpi
+_commit=654d35f49c08dd4243b8d6c915c9f054e7365d7c
+pkgver=r23.g654d35f
+pkgrel=1
+pkgdesc="2x HiDPI settings for the Homestead desktop (GDK, Xft.dpi, cursor size, scaled tint2)"
+arch=('any')
+url="https://github.com/ztancrell/zpt-artix"
+license=('MIT')
+depends=('homestead-theme' 'xorg-xrdb')
+makedepends=('git')
+backup=('etc/X11/xinit/xinitrc.d/50-homestead-hidpi.sh')
+source=("homestead::git+https://github.com/ztancrell/homestead.git#commit=${_commit}"
+        50-homestead-hidpi.sh)
+sha256sums=('SKIP'
+            '7236b5961508644d6d1ba9bd60f4cd2cd03db7d6dd67698a2d3f74d2db870bc7')
+
+pkgver() {
+  cd homestead
+  printf "r%s.g%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+}
+
+build() {
+  sed 's/^scale_relative_to_screen_height = 0$/scale_relative_to_screen_height = 800/' \
+    homestead/theme/tint2/tint2rc > tint2rc
+  # Exactly that one line changed.
+  [ "$(diff homestead/theme/tint2/tint2rc tint2rc | grep -c '^[<>]')" = 2 ]
+  diff homestead/theme/tint2/tint2rc tint2rc | grep -qx '> scale_relative_to_screen_height = 800'
+}
+
+package() {
+  install -Dm755 50-homestead-hidpi.sh "$pkgdir"/etc/X11/xinit/xinitrc.d/50-homestead-hidpi.sh
+  install -Dm644 tint2rc "$pkgdir"/usr/share/homestead/hidpi/tint2rc
+}
