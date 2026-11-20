@@ -7,8 +7,8 @@
 # six of the eight sounds are sound-theme-freedesktop's files (see its CREDITS), desktop-login.oga and
 # device-added.oga are of unknown origin.
 pkgname=homestead-theme
-_commit=6db81e46633f302f23ed4649d7cba25542055c46
-pkgver=r27.g6db81e4
+_commit=8b2319a19d4458b88a2f0e9223eb347a9ff61317
+pkgver=r28.g8b2319a
 pkgrel=1
 pkgdesc="Homestead desktop theme and default Openbox, tint2, kitty, obmenu-generator, GTK, dunst and KDE settings"
 arch=('any')
@@ -43,7 +43,7 @@ package() {
   cp -r sounds scripts "$pkgdir"/usr/share/homestead/
   install -Dm644 gtk-3.0/settings.ini "$pkgdir"/etc/gtk-3.0/settings.ini
   install -Dm644 gtk-4.0/settings.ini "$pkgdir"/etc/gtk-4.0/settings.ini
-  cp -r openbox tint2 kitty obmenu-generator "$pkgdir"/etc/xdg/
+  cp -r openbox tint2 kitty obmenu-generator fastfetch "$pkgdir"/etc/xdg/
   install -Dm644 dunst/50-homestead.conf "$pkgdir"/etc/dunst/dunstrc.d/50-homestead.conf
   install -Dm644 kde/kdeglobals "$pkgdir"/etc/xdg/kdeglobals
   install -Dm644 kde/Homestead.colors "$pkgdir"/usr/share/color-schemes/Homestead.colors

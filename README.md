@@ -118,7 +118,8 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
       the `Homestead` icon theme (Breeze Dark) and `Homestead-Cursor` (the `KDE-classic` cursors, then
       Neutral), all in `/usr/share/icons`; GTK settings in `/etc/gtk-3.0` and `/etc/gtk-4.0`; and the
       defaults in `/etc/xdg`: `openbox/` (rc.xml, menu.xml, autostart, environment), `tint2/tint2rc`,
-      `kitty/` (kitty.conf, homestead.conf) and `obmenu-generator/` (config.pl, schema.pl), with
+      `kitty/` (kitty.conf, homestead.conf), `obmenu-generator/` (config.pl, schema.pl) and
+      `fastfetch/config.jsonc` (minimal, Artix logo), with
       sounds and scripts in `/usr/share/homestead`. The volume, screen brightness and keyboard
       backlight keys (XF86AudioRaiseVolume/LowerVolume/Mute, XF86MonBrightnessUp/Down,
       XF86KbdBrightnessUp/Down) run `/usr/share/homestead/scripts/homestead-osd`: amixer Master in 5%
