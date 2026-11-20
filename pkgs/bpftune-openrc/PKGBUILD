@@ -1,0 +1,15 @@
+pkgname=bpftune-openrc
+pkgver=20261120
+pkgrel=1
+pkgdesc="OpenRC script for bpftune"
+arch=(any)
+url="https://github.com/oracle/bpftune"
+license=('GPL-2.0-only WITH Linux-syscall-note')
+# bpftune is in the AUR only: bpftune-git provides bpftune.
+depends=(openrc bpftune)
+source=(bpftune.initd)
+sha256sums=('65da23357c6cba71a6d85559052f4201de29e82d58291618d8d48f17352ebcbb')
+
+package() {
+  install -Dm755 bpftune.initd "${pkgdir}/etc/init.d/bpftune"
+}

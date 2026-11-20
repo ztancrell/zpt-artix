@@ -1,0 +1,12 @@
+#!/usr/bin/openrc-run
+
+description="BPF-based auto-tuning of system parameters"
+# supervise-daemon respawns it, like the upstream unit's Restart=on-failure.
+supervisor=supervise-daemon
+command="/usr/bin/bpftune"
+respawn_max=5
+
+depend() {
+	need localmount
+	after sysctl net
+}

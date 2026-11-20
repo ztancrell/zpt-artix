@@ -43,6 +43,10 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
   - `dmemcg-booster-openrc`: OpenRC script `/etc/init.d/dmemcg-booster` (`supervise-daemon`, the
     system instance, needs `cgroups`). Output to `/var/log/dmemcg-booster.log`. In no runlevel by
     default: `rc-update add dmemcg-booster default`.
+  - `bpftune-openrc`: OpenRC script `/etc/init.d/bpftune` (`supervise-daemon`, respawns up to 5
+    times like the upstream unit's `Restart=on-failure`, needs `localmount`, starts after `sysctl`
+    and `net`). Needs `bpftune`, which is AUR only (`bpftune-git` provides it). In no runlevel by
+    default: `rc-update add bpftune default`.
   - `systemd-boot-cachyos-signed-efi`: the CachyOS-signed systemd-boot EFI file
     `/usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed`, taken byte-identical from CachyOS's
     `systemd-boot-cachyos-signed` 262.2_1-1 (package pinned by sha256, its signature checked against
@@ -373,6 +377,36 @@ Add to `/etc/pacman.conf`, after the Artix repos (default `SigLevel`, signatures
 [zpt-artix]
 Server = https://github.com/ztancrell/zpt-artix/releases/download/repo
 ```
+
+## Arch repos
+
+For packages only Arch has (and AUR packages that need them), add Arch's `[extra]` and
+`[multilib]`. First install `artix-archlinux-support` (Artix `[galaxy]`): it creates
+`/etc/pacman.d/mirrorlist-arch`, and until that file exists pacman refuses to parse a
+`pacman.conf` that includes it. It also provides (and conflicts with) `systemd`, `systemd-libs` and
+`libsystemd` as a dummy, so AUR packages that list systemd as a dependency install.
+
+```sh
+sudo pacman -S artix-archlinux-support
+```
+
+Then add to `/etc/pacman.conf`, after the Artix repos:
+
+```ini
+[extra]
+Include = /etc/pacman.d/mirrorlist-arch
+
+[multilib]
+Include = /etc/pacman.d/mirrorlist-arch
+```
+
+```sh
+sudo pacman-key --populate archlinux
+sudo pacman -Sy
+```
+
+Arch packages bring systemd units, not OpenRC scripts: look for `<name>-openrc` in Artix first
+(LACT's is `lact-openrc` in `[galaxy]`), then in this repo.
 
 ## Desktop
 
