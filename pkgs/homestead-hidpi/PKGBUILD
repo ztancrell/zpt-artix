@@ -1,6 +1,9 @@
 # 2x scaling for the Homestead desktop on Retina panels (2560x1600 MacBook Pro). Not in zpt-artix-desktop.
 # The tint2rc is homestead-theme's at the same homestead commit with only scale_relative_to_screen_height
 # changed (800: 2x on a 1600-pixel-high panel); keep _commit in step with homestead-theme.
+# GTK 3 loads gtk-3.0/settings.ini from each XDG_CONFIG_DIRS entry after /etc/gtk-3.0 (a later file wins)
+# and gives gtk-cursor-theme-size to Xcursor unscaled, so the hidpi xdg dir carries homestead-theme's
+# settings.ini with only the cursor size changed (24 to 48, as XCURSOR_SIZE).
 # Openbox ignores Xft.dpi, so the Openbox rc.xml (font sizes doubled, theme Homestead-HiDPI) and the
 # Homestead-HiDPI Openbox theme (pixel sizes and buttons doubled) are generated from the same commit too.
 # The artix-hidpi GRUB theme is generated from the installed artix-grub-theme (GPL; the artix-branding
@@ -9,8 +12,8 @@
 pkgname=homestead-hidpi
 _commit=4b3f07f3414eca620a65a734e1349dff604b9091
 pkgver=r24.g4b3f07f
-pkgrel=1
-pkgdesc="2x HiDPI settings for the Homestead desktop (GDK, Xft.dpi, cursor size, scaled tint2, Openbox and GRUB theme)"
+pkgrel=2
+pkgdesc="2x HiDPI settings for the Homestead desktop (GDK, Xft.dpi, X and GTK cursor size, scaled tint2, Openbox and GRUB theme)"
 arch=('any')
 url="https://github.com/ztancrell/zpt-artix"
 license=('MIT' 'GPL')
@@ -33,6 +36,12 @@ build() {
   # Exactly that one line changed.
   [ "$(diff homestead/theme/tint2/tint2rc tint2rc | grep -c '^[<>]')" = 2 ]
   diff homestead/theme/tint2/tint2rc tint2rc | grep -qx '> scale_relative_to_screen_height = 800'
+
+  sed 's/^gtk-cursor-theme-size=24$/gtk-cursor-theme-size=48/' \
+    homestead/theme/gtk-3.0/settings.ini > gtk3-settings.ini
+  # Exactly that one line changed.
+  [ "$(diff homestead/theme/gtk-3.0/settings.ini gtk3-settings.ini | grep -c '^[<>]')" = 2 ]
+  diff homestead/theme/gtk-3.0/settings.ini gtk3-settings.ini | grep -qx '> gtk-cursor-theme-size=48'
 
   # rc.xml: every <size> inside a <font> doubled, the theme renamed; nothing else changed.
   local rc=homestead/theme/openbox/rc.xml
@@ -147,6 +156,7 @@ package() {
   install -Dm755 50-homestead-hidpi.sh "$pkgdir"/etc/X11/xinit/xinitrc.d/50-homestead-hidpi.sh
   install -Dm644 tint2rc "$pkgdir"/usr/share/homestead/hidpi/tint2rc
   install -Dm644 rc.xml "$pkgdir"/usr/share/homestead/hidpi/xdg/openbox/rc.xml
+  install -Dm644 gtk3-settings.ini "$pkgdir"/usr/share/homestead/hidpi/xdg/gtk-3.0/settings.ini
   install -d "$pkgdir"/usr/share/themes
   cp -r Homestead-HiDPI "$pkgdir"/usr/share/themes/
   install -d "$pkgdir"/usr/share/grub/themes

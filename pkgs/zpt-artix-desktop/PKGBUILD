@@ -1,7 +1,9 @@
+# /etc/xdg/mimeapps.list: folders open in Thunar. Without it, xdg-open (no XDG_CURRENT_DESKTOP under
+# Openbox) takes the first inode/directory handler in mimeinfo.cache, kitty-open.desktop.
 # wmctrl, obmenu-generator, dex, xcursor-neutral, homestead-theme and homestead-wallpapers are in no Artix repo; they come from this repo.
 pkgname=zpt-artix-desktop
 pkgver=1
-pkgrel=5
+pkgrel=6
 pkgdesc="zpt-artix desktop: the homestead X11 stack, ly login, session tools, Thunar, PipeWire, NetworkManager, Bluetooth"
 arch=('any')
 url="https://github.com/ztancrell/zpt-artix"
@@ -19,3 +21,9 @@ depends=('xlibre-xserver-homestead' 'xlibre-input-libinput-homestead'
          'networkmanager-openrc' 'network-manager-applet' 'nss-mdns' 'bluez-openrc' 'blueman'
          'kitty' 'ttf-dejavu' 'awesome-terminal-fonts' 'cantarell-fonts' 'wqy-zenhei' 'xcursor-neutral' 'homestead-theme' 'homestead-wallpapers' 'upower'
          'power-profiles-daemon-openrc')
+backup=('etc/xdg/mimeapps.list')
+
+package() {
+  install -d "$pkgdir"/etc/xdg
+  printf '[Default Applications]\ninode/directory=thunar.desktop\n' > "$pkgdir"/etc/xdg/mimeapps.list
+}

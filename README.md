@@ -164,6 +164,14 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
       other line differs). A `~/.config/openbox/rc.xml` still overrides it. Its menu.xml and the
       session's autostart and environment still come from `/etc/xdg`: openbox-session and
       openbox-autostart read `/etc/xdg/openbox` by path, not through `XDG_CONFIG_DIRS`.
+      GTK 3 reads `/etc/gtk-3.0/settings.ini`, then `gtk-3.0/settings.ini` in each `XDG_CONFIG_DIRS`
+      entry (a later file wins), then `~/.config/gtk-3.0/settings.ini`, and hands
+      `gtk-cursor-theme-size` to Xcursor unscaled (GDK_SCALE does not multiply it), so
+      `/usr/share/homestead/hidpi/xdg/gtk-3.0/settings.ini` is homestead-theme's settings.ini with
+      only `gtk-cursor-theme-size=48` (24 there; the build fails if any other line differs); without
+      it GTK 3 apps (Firefox, xed) set a 24 px cursor over their windows. A cursor size or theme in
+      `~/.config/gtk-3.0/settings.ini` still overrides it. homestead-theme's gtk-4.0 settings set no
+      cursor size, so there is no gtk-4.0 copy.
       `/usr/share/themes/Homestead-HiDPI` is the Homestead Openbox theme with every integer (pixel)
       value in its themerc doubled (`menu.overlap.x`, `menu.separator.padding.height`,
       `menu.border.width`, `padding.width`, `padding.height`, `window.titlebar.padding.width`,
@@ -202,7 +210,12 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
     - `perl-linux-desktopfiles` 0.26 (AUR), needed by `obmenu-generator`.
     - `xcursor-neutral` 1.13a (AUR): source from the mirror its PKGBUILD names, same sha256
       (distribute.kde.org no longer serves it).
-  - `zpt-artix-desktop`: meta-package (no files) for the whole desktop: the homestead X stack,
+  - `zpt-artix-desktop`: meta-package for the whole desktop; its one file,
+    `/etc/xdg/mimeapps.list`, makes `thunar.desktop` the default for `inode/directory`, so
+    `xdg-open` on a folder (the Openbox menu's File Manager) opens Thunar: under Openbox there is no
+    `XDG_CURRENT_DESKTOP`, and xdg-mime would otherwise take the first handler in `mimeinfo.cache`,
+    `kitty-open.desktop`. An `inode/directory` line in `~/.config/mimeapps.list` still overrides it.
+    It depends on the homestead X stack,
     xinit/xrandr/xset/xkill, xclip, xdotool, wmctrl, `ly` + `ly-openrc`, session tools (obmenu-generator,
     dex, dunst, feh,
     polkit-gnome, lxappearance-obconf, xdg-user-dirs-gtk, xdg-desktop-portal-gtk, slock, redshift,
