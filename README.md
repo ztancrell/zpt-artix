@@ -115,7 +115,16 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
       Neutral), all in `/usr/share/icons`; GTK settings in `/etc/gtk-3.0` and `/etc/gtk-4.0`; and the
       defaults in `/etc/xdg`: `openbox/` (rc.xml, menu.xml, autostart, environment), `tint2/tint2rc`,
       `kitty/` (kitty.conf, homestead.conf) and `obmenu-generator/` (config.pl, schema.pl), with
-      sounds and scripts in `/usr/share/homestead`. These are the owner's configs without his monitor
+      sounds and scripts in `/usr/share/homestead`. The volume, screen brightness and keyboard
+      backlight keys (XF86AudioRaiseVolume/LowerVolume/Mute, XF86MonBrightnessUp/Down,
+      XF86KbdBrightnessUp/Down) run `/usr/share/homestead/scripts/homestead-osd`: amixer Master in 5%
+      steps with the click sound, brightnessctl on the backlight (5%, never below 1%) or the
+      `*kbd_backlight` LED (1/16 steps), then a short dunst popup with a level bar (notify-send; one
+      popup per kind, replaced on each press). Without a backlight device the brightness keys do nothing.
+      homestead-theme depends on brightnessctl and libnotify for this. brightnessctl's udev rule gives
+      `/sys/class/backlight/*/brightness` to the `video` group and `/sys/class/leds/*/brightness` to
+      `input`, so the keyboard backlight keys need the user in `input`
+      (`sudo usermod -aG input <user>`, then log in again); otherwise they do nothing. These are the owner's configs without his monitor
       layout, Synergy or redshift script, with `loginctl suspend`. Artix's `default-cursors` owns
       `/usr/share/icons/default`, so the cursor comes from `XCURSOR_THEME` in
       `/etc/xdg/openbox/environment` (with `XCURSOR_SIZE` 24 unless already set) and the GTK settings. Override rules: `~/.config/openbox/rc.xml`
