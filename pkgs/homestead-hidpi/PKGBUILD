@@ -3,16 +3,19 @@
 # changed (800: 2x on a 1600-pixel-high panel); keep _commit in step with homestead-theme.
 # Openbox ignores Xft.dpi, so the Openbox rc.xml (font sizes doubled, theme Homestead-HiDPI) and the
 # Homestead-HiDPI Openbox theme (pixel sizes and buttons doubled) are generated from the same commit too.
+# The artix-hidpi GRUB theme is generated from the installed artix-grub-theme (GPL; the artix-branding
+# repo states no version): 32 px DejaVu fonts, menu sizes and frame images doubled. GRUB_THEME is a
+# manual step (README).
 pkgname=homestead-hidpi
 _commit=654d35f49c08dd4243b8d6c915c9f054e7365d7c
 pkgver=r23.g654d35f
-pkgrel=2
-pkgdesc="2x HiDPI settings for the Homestead desktop (GDK, Xft.dpi, cursor size, scaled tint2 and Openbox)"
+pkgrel=3
+pkgdesc="2x HiDPI settings for the Homestead desktop (GDK, Xft.dpi, cursor size, scaled tint2, Openbox and GRUB theme)"
 arch=('any')
 url="https://github.com/ztancrell/zpt-artix"
-license=('MIT')
+license=('MIT' 'GPL')
 depends=('homestead-theme' 'xorg-xrdb')
-makedepends=('git' 'python')
+makedepends=('git' 'python' 'artix-grub-theme' 'grub' 'ttf-dejavu')
 backup=('etc/X11/xinit/xinitrc.d/50-homestead-hidpi.sh')
 source=("homestead::git+https://github.com/ztancrell/homestead.git#commit=${_commit}"
         50-homestead-hidpi.sh)
@@ -80,6 +83,64 @@ PY
         $(( 2 * $(sed -n "s/^#define .*_$k //p" "$x") )) ]
     done
   done
+
+  # artix-hidpi GRUB theme. GRUB names a font "Family Style Size" from the .pf2's NAME section.
+  local gt=/usr/share/grub/themes/artix
+  rm -rf artix-hidpi; mkdir artix-hidpi
+  grub-mkfont -s 32 -o artix-hidpi/dejavu_sans_bold_32.pf2 /usr/share/fonts/TTF/DejaVuSans-Bold.ttf
+  grub-mkfont -s 32 -o artix-hidpi/dejavu_sans_mono_32.pf2 /usr/share/fonts/TTF/DejaVuSansMono.ttf
+  _pf2name() {
+    python -c 'import struct, sys
+d = open(sys.argv[1], "rb").read(); i = 0
+while d[i:i + 4] != b"NAME": i += 8 + struct.unpack(">I", d[i + 4:i + 8])[0]
+print(d[i + 8:i + 8 + struct.unpack(">I", d[i + 4:i + 8])[0]].rstrip(b"\0").decode())' "$1"
+  }
+  local bold mono; bold=$(_pf2name artix-hidpi/dejavu_sans_bold_32.pf2); mono=$(_pf2name artix-hidpi/dejavu_sans_mono_32.pf2)
+  [[ $bold = 'DejaVu Sans Bold 32' && $mono = 'DejaVu Sans Mono Regular 32' ]]
+  # theme.txt: menu fonts bold, message and terminal fonts mono, the menu's pixel sizes doubled
+  # (zeros and percentages unchanged); nothing else changed.
+  local px='item_height|icon_width|icon_height|item_icon_space|scrollbar_width'
+  awk -v bold="$bold" -v mono="$mono" -v px="^ *($px) = [0-9]+\$" '
+    /^(message|terminal)-font: "Unifont Regular 16"$/ {sub(/"Unifont Regular 16"/, "\"" mono "\"")}
+    /^ *(selected_)?item_font = "Unifont Regular 16"$/ {sub(/"Unifont Regular 16"/, "\"" bold "\"")}
+    $0 ~ px {n = $NF; sub(/[0-9]+$/, n * 2)}
+    {print}' $gt/theme.txt > artix-hidpi/theme.txt
+  [ "$(diff $gt/theme.txt artix-hidpi/theme.txt | grep -c '^<')" = 9 ]
+  [ "$(diff $gt/theme.txt artix-hidpi/theme.txt | grep '^>' | grep -cxE "> ((message|terminal)-font: \"$mono\"| *(selected_)?item_font = \"$bold\"| *($px) = [0-9]+)")" = 9 ]
+  cp -r $gt/background.png $gt/logo.png $gt/icons artix-hidpi/
+  # Frame images scaled 2x, nearest neighbour; the check decodes each result and compares every pixel.
+  python - $gt artix-hidpi $gt/{highlight,menu,slider}_*.png $gt/userpass.png <<'PY'
+import pathlib, struct, sys, zlib
+def decode(path):
+    d = pathlib.Path(path).read_bytes(); assert d[:8] == b'\x89PNG\r\n\x1a\n', path
+    i, ch = 8, []
+    while i < len(d):
+        n = struct.unpack('>I', d[i:i + 4])[0]; ch.append((d[i + 4:i + 8], d[i + 8:i + 8 + n])); i += 12 + n
+    w, h, depth, ctype, _, _, lace = struct.unpack('>IIBBBBB', ch[0][1])
+    assert depth == 8 and lace == 0 and ctype in (0, 2, 4, 6), path
+    bpp = {0: 1, 2: 3, 4: 2, 6: 4}[ctype]; s = w * bpp
+    raw = zlib.decompress(b''.join(v for k, v in ch if k == b'IDAT')); prev = bytearray(s); rows = []
+    for y in range(h):
+        f, r = raw[y * (s + 1)], bytearray(raw[y * (s + 1) + 1:(y + 1) * (s + 1)])
+        for x in range(s):
+            a = r[x - bpp] if x >= bpp else 0; b = prev[x]; c = prev[x - bpp] if x >= bpp else 0
+            p = a + b - c; pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
+            r[x] = (r[x] + (0, a, b, (a + b) // 2, a if pa <= pb and pa <= pc else b if pb <= pc else c)[f]) & 255
+        rows.append(bytes(r)); prev = r
+    return w, h, ctype, bpp, rows
+def chunk(k, v): return struct.pack('>I', len(v)) + k + v + struct.pack('>I', zlib.crc32(k + v))
+src, dst = map(pathlib.Path, sys.argv[1:3])
+for f in map(pathlib.Path, sys.argv[3:]):
+    w, h, ctype, bpp, rows = decode(f)
+    big = [b''.join(r[x:x + bpp] * 2 for x in range(0, len(r), bpp)) for r in rows for _ in (0, 1)]
+    (dst / f.name).write_bytes(b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', 2 * w, 2 * h, 8, ctype, 0, 0, 0))
+                              + chunk(b'IDAT', zlib.compress(b''.join(b'\0' + r for r in big), 9)) + chunk(b'IEND', b''))
+    w2, h2, _, _, rows2 = decode(dst / f.name)
+    assert (w2, h2) == (2 * w, 2 * h) and all(rows2[y][x * bpp:(x + 1) * bpp] == rows[y // 2][x // 2 * bpp:(x // 2 + 1) * bpp]
+                                              for y in range(h2) for x in range(w2)), f
+    print(f.name, w, h, '->', w2, h2)
+PY
+  [ "$(ls $gt | grep -v unifont.pf2)" = "$(ls artix-hidpi | grep -v 'dejavu_.*\.pf2')" ]
 }
 
 package() {
@@ -88,4 +149,6 @@ package() {
   install -Dm644 rc.xml "$pkgdir"/usr/share/homestead/hidpi/xdg/openbox/rc.xml
   install -d "$pkgdir"/usr/share/themes
   cp -r Homestead-HiDPI "$pkgdir"/usr/share/themes/
+  install -d "$pkgdir"/usr/share/grub/themes
+  cp -r artix-hidpi "$pkgdir"/usr/share/grub/themes/
 }

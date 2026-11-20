@@ -161,13 +161,28 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
       `window.titlebar.padding.height`, `window.button.width`, `window.button.height`,
       `window.handle.width`, `osd.border.width`; zeros stay 0, colours and textures unchanged), every
       `.xbm` button scaled 2x by pixel doubling (the build fails unless each is twice its source's
-      width and height), and its index.theme renamed. Install with `sudo pacman -S homestead-hidpi`
-      and log in again. Depends on homestead-theme and xorg-xrdb; builds with python.
+      width and height), and its index.theme renamed. `/usr/share/grub/themes/artix-hidpi` is
+      artix-grub-theme's GRUB theme (GPL; the artix-branding repo states no version) at 2x, built
+      from the copy installed at build time: item_font and selected_item_font are
+      `DejaVu Sans Bold 32`, message-font and terminal-font `DejaVu Sans Mono Regular 32` (the names
+      grub-mkfont gives `dejavu_sans_bold_32.pf2` and `dejavu_sans_mono_32.pf2`, which stay in the
+      theme folder, where grub-mkconfig adds a `loadfont` for each), `item_height`, `icon_width`, `icon_height`,
+      `item_icon_space` and `scrollbar_width` doubled (zeros and percentages unchanged; the build fails
+      if any other theme.txt line differs), the highlight, menu, slider and userpass images scaled 2x
+      nearest neighbour (the build decodes each and checks every pixel), and background.png, logo.png
+      and icons/ copied unchanged; unifont.pf2 is left out, since no line uses it any more.
+      Install with `sudo pacman -S homestead-hidpi` and log in again. Depends on homestead-theme and
+      xorg-xrdb; builds with python, artix-grub-theme, grub (grub-mkfont) and ttf-dejavu.
       The package can't reach the text console, where ly draws with the console font; that is a
       manual step on each Retina machine (`/etc/conf.d/consolefont` belongs to `openrc`):
       set `consolefont="ter-v32b"` there (Terminus 16x32, from `terminus-font`), then
       `sudo rc-update add consolefont boot`. It applies to tty1-12 from the next boot. The GRUB
-      menu is still unscaled.
+      theme is manual too (`/etc/default/grub` belongs to `grub`):
+      `sudo cp /etc/default/grub /etc/default/grub.pre-hidpi`, set
+      `GRUB_THEME="/usr/share/grub/themes/artix-hidpi/theme.txt"` there, then
+      `sudo grub-mkconfig -o /boot/grub/grub.cfg`. Package updates need no re-run: GRUB reads the
+      theme and its fonts from that folder at boot. To undo,
+      `sudo cp /etc/default/grub.pre-hidpi /etc/default/grub && sudo grub-mkconfig -o /boot/grub/grub.cfg`.
   - Desktop tools in no Artix repo, built from Arch's or the AUR's PKGBUILD (named in each one's
     first line), unchanged unless noted:
     - `wmctrl` 1.07 (Arch): tarball from Debian's archive, same sha512 (web.archive.org serves
