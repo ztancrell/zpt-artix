@@ -94,7 +94,8 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
     from zpt-cachy and built with Artix's default generic x86-64 flags:
     - `xlibre-xserver-homestead`: the XLibre X server ([xserver](https://github.com/ztancrell/xserver)),
       one package with the common files and SDK (provides `xlibre-xserver`, `xorg-server` and their
-      `-common`/`-devel`); no Xephyr, Xvfb, Xnest or suid wrapper. Without systemd: needs Artix's
+      `-common`/`-devel`, and `x11win-server`, the X server name Artix's `sddm` depends on); no
+      Xephyr, Xvfb, Xnest or suid wrapper. Without systemd: needs Artix's
       `libudev` instead of `systemd-libs`, and its logind support (`-D systemd_logind=true`, as in
       Artix's own `xlibre-xserver`) talks to elogind over D-Bus. Links no libsystemd.
     - `xlibre-input-libinput-homestead`: the libinput input driver

@@ -5,7 +5,7 @@
 pkgname=xlibre-xserver-homestead
 _commit=dd834ad3e2f386761f3c3cd9ce0923e06fe7fadc
 pkgver=25.2.0.r24109.gdd834ad
-pkgrel=1
+pkgrel=2
 pkgdesc="XLibre X server (homestead fork), incl. common files and SDK"
 arch=('x86_64')
 url="https://github.com/ztancrell/xserver"
@@ -17,7 +17,7 @@ depends=('dbus' 'glibc' 'libbsd' 'libdrm' 'libepoxy' 'libgl' 'libpciaccess' 'lib
 makedepends=('git' 'meson' 'libx11' 'libxkbfile' 'libxres' 'mesa' 'libudev'
              'xorg-font-util' 'xtrans')
 provides=('xlibre-xserver' 'xlibre-xserver-common' 'xlibre-xserver-devel'
-          'xorg-server' 'xorg-server-common' 'xorg-server-devel' 'x-server'
+          'xorg-server' 'xorg-server-common' 'xorg-server-devel' 'x-server' 'x11win-server'
           'X-ABI-EXTENSION_VERSION=11.0' 'X-ABI-VIDEODRV_VERSION=28.0' 'X-ABI-XINPUT_VERSION=26.0')
 conflicts=('xlibre-xserver' 'xlibre-xserver-common' 'xlibre-xserver-devel'
            'xorg-server' 'xorg-server-common' 'xorg-server-devel'
