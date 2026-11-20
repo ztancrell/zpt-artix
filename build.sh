@@ -29,6 +29,12 @@ for d in "$@"; do build_one "$d"; done
 # failed ones, so makepkg -s installs those deps from it, as long as each round builds something.
 while [ -n "$failed" ] && pacman-conf --repo zpt-artix Server 2>/dev/null | grep -q '^file://'; do
   repo-add -R repo/zpt-artix.db.tar.zst repo/*.pkg.tar.zst && sudo pacman -Sy || break
+  # obmenu-generator's makepkg -s installs Artix's stock openbox, which owns /etc/xdg/openbox/*; homestead-theme
+  # (homestead-hidpi's dependency) ships those files too, so installing it failed with conflicting files.
+  # Swap in this repo's openbox-homestead, as on a real install (--ask=4: yes to removing the conflicting openbox).
+  if pacman -Qq openbox >/dev/null 2>&1 && pacman -Si zpt-artix/openbox-homestead >/dev/null 2>&1; then
+    sudo pacman -S --noconfirm --ask=4 zpt-artix/openbox-homestead || break
+  fi
   retry=$failed; failed=
   for n in $retry; do build_one "pkgs/$n/"; done
   [ "$failed" = "$retry" ] && break
