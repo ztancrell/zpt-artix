@@ -133,7 +133,21 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
       `/etc/xdg/tint2/tint2rc`, and on
       first login copies `/etc/xdg/obmenu-generator` to `~/.config/obmenu-generator` (obmenu-generator
       reads only that and would otherwise write xterm defaults); `~/.config/gtk-3.0/settings.ini` (Plasma
-      writes one) overrides the GTK settings. Depends on breeze-icons, ttf-dejavu, xcursor-neutral, and
+      writes one) overrides the GTK settings. After tint2 the autostart runs `dex -a -e Openbox`, which
+      starts the XDG autostart entries (`/etc/xdg/autostart`, `~/.config/autostart`): nm-applet,
+      blueman-applet and pasystray in the tray, and kgpg, pam_kwallet_init, xapp-sn-watcher and
+      xdg-user-dirs-update when installed; openbox-autostart's own `openbox-xdg-autostart` needs
+      python-pyxdg and runs nothing without it. A `.desktop` file with `Hidden=true` in
+      `~/.config/autostart` turns one off. The environment sets `QT_QPA_PLATFORMTHEME=gtk3` and unsets
+      `QT_STYLE_OVERRIDE`, so Qt 5 and 6 apps follow the GTK theme: Artix's `/etc/environment` (from
+      pam) sets both to `gtk4`, which is no Qt plugin, and Qt fell back to light Fusion. Notifications:
+      `/etc/dunst/dunstrc.d/50-homestead.conf`, a drop-in over dunst's own `/etc/dunst/dunstrc` (dunst
+      reads `/etc/dunst`, not `/etc/xdg`, while `XDG_CONFIG_DIRS` is unset; a `~/.config/dunst/dunstrc`
+      replaces both). KDE apps: `/etc/xdg/kdeglobals` with the Homestead colours, Fusion, Homestead
+      icons and Sans Serif 11, and the `Homestead` scheme in `/usr/share/color-schemes` (KDE apps read
+      the colours from kdeglobals itself, so they are repeated there). An Artix ISO install copies a
+      `~/.config/kdeglobals` (Artix-dark) from `/etc/skel` that overrides it; move it away to get
+      Homestead's. Depends on dex, breeze-icons, ttf-dejavu, xcursor-neutral, and
       xed and audacious (key bindings); zenity (tint2 clock) and geany (menu's config editor) are
       optional. The `firefox-nightly` key binding has no Artix package. Licence unknown: the theme is
       the owner's, `KDE-classic`'s source is unknown, six sounds are sound-theme-freedesktop's.

@@ -10,9 +10,9 @@
 # repo states no version): 32 px DejaVu fonts, menu sizes and frame images doubled. GRUB_THEME is a
 # manual step (README).
 pkgname=homestead-hidpi
-_commit=4b3f07f3414eca620a65a734e1349dff604b9091
-pkgver=r24.g4b3f07f
-pkgrel=2
+_commit=88b62189e2c48d3bfd5fa0221a632b8d68264f4b
+pkgver=r25.g88b6218
+pkgrel=1
 pkgdesc="2x HiDPI settings for the Homestead desktop (GDK, Xft.dpi, X and GTK cursor size, scaled tint2, Openbox and GRUB theme)"
 arch=('any')
 url="https://github.com/ztancrell/zpt-artix"
