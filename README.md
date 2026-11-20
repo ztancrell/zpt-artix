@@ -122,7 +122,7 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
     `pipewire-openrc`/`pipewire-pulse-openrc`/`wireplumber-openrc`, pavucontrol, pasystray,
     alsa-utils (amixer, for the volume keys),
     `networkmanager-openrc`, network-manager-applet, nss-mdns, `bluez-openrc`, blueman, kitty,
-    fonts, the xcursor-neutral cursor theme, upower and `power-profiles-daemon-openrc`. No GPU
+    fonts (with ttf-dejavu, the kitty config's DejaVu Sans Mono), the xcursor-neutral cursor theme, upower and `power-profiles-daemon-openrc`. No GPU
     drivers or microcode (per machine).
   - Apps in no Artix repo that need Electron 43 (Artix's newest is electron42), so they ship as
     upstream's prebuilt binaries with their own bundled Electron, from the AUR's `-bin` PKGBUILD
