@@ -1,0 +1,19 @@
+# Like the Artix gaming ISO's local.d/0-gaming.start: the first UID 1000 user joins the games group.
+post_install() {
+  local user
+  user=$(awk -F: '$3 == 1000 { print $1; exit }' /etc/passwd)
+  if [ -z "$user" ]; then
+    echo "zpt-artix-gaming: no user with UID 1000; add players with: usermod -a -G games <user>"
+  elif id -nG "$user" | grep -qw games; then
+    echo "zpt-artix-gaming: $user is already in the games group"
+  elif usermod -a -G games "$user"; then
+    echo "zpt-artix-gaming: added $user to the games group (log in again for it to apply)"
+  else
+    echo "zpt-artix-gaming: could not add $user to the games group; run: usermod -a -G games $user"
+  fi
+  return 0
+}
+
+post_remove() {
+  echo "zpt-artix-gaming: games group membership is left as it is (gpasswd -d <user> games removes it)"
+}

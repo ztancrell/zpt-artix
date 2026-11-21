@@ -94,6 +94,36 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
       `updpkgsums`, build, and sort every file the build names onto `_keep` or `_drop` (port it if it
       needs systemd). The build also fails if the `game-performance` port no longer applies. Bump
       `eac-tools` to the same tag.
+  - `zpt-artix-gaming`: the useful settings of Artix's beta gaming ISO profiles
+    ([iso-profiles](https://gitea.artixlinux.org/artix/iso-profiles) `wip` branch, commit
+    `14c737deee84a4406dd7313fba263618dbdf1f37`, `gaming-plasma/` and `gaming-xfce/`), BSD-2-Clause.
+    Needs openrc; optional: timidity++, soundfont-generaluser and pipewire-jack (MIDI, below).
+    - `/usr/lib/sysctl.d/80-gameperf.conf`: `vm.max_map_count = 2147483642`. It sorts after Artix's
+      `10-artix.conf` (1048576), so it wins; `70-cachyos-settings.conf` doesn't set it.
+    - `/etc/security/limits.d/0-gaming.conf`: memlock unlimited (soft and hard) for the `games`
+      group. The ISO's `nofile 524288` for `@games` is left out: pam_limits applies a group entry over
+      a `*` entry whatever the file order, so it would lower `30-nofile.conf`'s hard limit 1048576 for
+      the group.
+    - The games group: on install, the first user with UID 1000 is added to `games`, like the ISO's
+      `local.d/0-gaming.start`. It prints what it did, does nothing if there is no such user, and
+      never fails the install. Log in again for it to apply. Others: `sudo usermod -a -G games
+      <user>`. Removing the package leaves group membership as it is.
+    - MIDI for DOSBox-era games: `/usr/lib/modules-load.d/snd_virmidi.conf` (virtual MIDI ports,
+      loaded by OpenRC's `modules` service at boot), and `/etc/user/init.d/timidity`, an OpenRC user
+      service like PipeWire's (see [Desktop](#desktop)) in place of the ISO's dinit user service:
+      supervise-daemon runs `timidity -c /etc/timidity/zpt-artix-gaming.cfg -iA -Oj` (ALSA sequencer
+      in, JACK out) after `pipewire-pulse`. `zpt-artix-gaming.cfg` holds the ISO's one soundfont line,
+      `/usr/share/soundfonts/GeneralUser.sf2` (timidity++ owns `/etc/timidity/timidity.cfg`). Setup:
+      add Arch `[extra]` (see [Arch repos](#arch-repos)), then `sudo pacman -S timidity++
+      pipewire-jack`, install `soundfont-generaluser` from the AUR with an AUR helper (this repo
+      doesn't build it), and `rc-update --user add timidity default` (or `rc-service --user timidity
+      start` once). In no runlevel by default.
+    - Not ported: `vm.swappiness=10` (fights zram; `zpt-artix-settings` uses 100),
+      `min_free_kbytes` 1 GB and the other vm and `kernel.sched_*` writes in the ISO's tmpfiles file
+      (CachyOS's tuning leaves them at kernel defaults), its THP knobs (`zpt-artix-settings` ships
+      CachyOS's `thp.conf`), its debugfs sched knobs (EEVDF slice tuning, no effect under scx), the
+      PulseAudio `daemon.conf` (PipeWire is used), `linux-zen` (the CachyOS EAC kernel is used), and
+      the demo games, desktop, lightdm, wallpaper and skel files.
   - The homestead X stack, from the owner's forks (each pinned to a commit, pkgver from git), moved
     from zpt-cachy and built with Artix's default generic x86-64 flags:
     - `xlibre-xserver-homestead`: the XLibre X server ([xserver](https://github.com/ztancrell/xserver)),
@@ -274,16 +304,18 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
   - `zpt-artix-apps`: meta-package for everyday apps: `firefox-nightly-bin`, thunderbird, `obsidian-bin`,
     qbittorrent, audacious, steam, lutris, `heroic-games-launcher-bin`, mangohud, gamemode,
     gamescope, protontricks, git, github-cli, htop, fastfetch, ripgrep, flatpak, lact with
-    `lact-openrc`, and the AUR packages above. Its optdepends name the rest, which a stock
+    `lact-openrc`, `zpt-artix-gaming`, goverlay, vkd3d, lib32-vkd3d, piper, solaar, and the AUR
+    packages above. Its optdepends name the rest, which a stock
     zpt-artix install can't resolve: ghidra, gitea-cli, fsarchiver, efitools,
-    nano-syntax-highlighting, lib32-mangohud (Arch `[extra]`/`[multilib]` only), the AUR's
+    nano-syntax-highlighting, lib32-mangohud, umu-launcher, antimicrox, openrgb (Arch
+    `[extra]`/`[multilib]` only), the AUR's
     `electron-cash-git` and `arch-update` (they need Arch `[extra]` packages; `arch-update` also
     depends on `systemd`), `bpftune-openrc`, and four AUR packages this repo doesn't build:
     `lib32-vkbasalt` (its build deps are in `[lib32]`, which the build container doesn't enable),
     `reshade-shaders-git` (its build downloads 45 third-party shader packs from unpinned branch
     zips, with no checksums and licences that weren't reviewed), `virtio-win` (an 877 MB ISO) and
     `synergy3-bin` (proprietary; its build fetches Symless's package with a download token). Install
-    those from the AUR with an AUR helper. `steam` is in
+    those from the AUR with an AUR helper. `steam` and `lib32-vkd3d` are in
     Artix's `[lib32]` repo, which Artix's default `pacman.conf` leaves off: enable it first. No
     browser since 1-3: Firefox Nightly has no Artix package, so it is Mozilla's tarball
     (`https://download.mozilla.org/?product=firefox-nightly-latest-ssl&os=linux64&lang=en-US`)
@@ -452,7 +484,7 @@ Arch packages bring systemd units, not OpenRC scripts: look for `<name>-openrc` 
 ## Desktop
 
 With the repo added (above), install the meta-packages. `zpt-artix-apps` needs Artix's `[lib32]`
-repo for `steam`: uncomment it in `/etc/pacman.conf` (or add `[lib32]` with
+repo for `steam` and `lib32-vkd3d`: uncomment it in `/etc/pacman.conf` (or add `[lib32]` with
 `Include = /etc/pacman.d/mirrorlist`), then `sudo pacman -Sy`.
 
 ```sh

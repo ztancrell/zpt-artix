@@ -9,7 +9,7 @@
 # resolve: Arch [extra]/[multilib] packages, and AUR apps this repo doesn't build (see README).
 pkgname=zpt-artix-apps
 pkgver=1
-pkgrel=5
+pkgrel=6
 pkgdesc="zpt-artix everyday apps: browser, mail, notes, torrents, music, gaming, dev tools"
 arch=('any')
 url="https://github.com/ztancrell/zpt-artix"
@@ -18,13 +18,17 @@ depends=('firefox-nightly-bin' 'thunderbird' 'obsidian-bin' 'qbittorrent' 'audac
          'steam' 'lutris' 'heroic-games-launcher-bin' 'mangohud' 'gamemode' 'gamescope' 'protontricks'
          'git' 'github-cli' 'htop' 'fastfetch' 'ripgrep' 'flatpak'
          'lact' 'lact-openrc' 'vkbasalt' 'simple-mtpfs' 'jmtpfs' 'amdtop'
-         'python311' 'libpng12' 'parole-git' 'ocs-url' 'bpftune-git')
+         'python311' 'libpng12' 'parole-git' 'ocs-url' 'bpftune-git'
+         'zpt-artix-gaming' 'goverlay' 'vkd3d' 'lib32-vkd3d' 'piper' 'solaar')
 optdepends=('ghidra: reverse engineering (needs Arch [extra]; see README)'
             'gitea-cli: Gitea command line (needs Arch [extra]; see README)'
             'fsarchiver: filesystem backups (needs Arch [extra]; see README)'
             'efitools: Secure Boot key tools (needs Arch [extra]; see README)'
             'nano-syntax-highlighting: nano syntax files (needs Arch [extra]; see README)'
             'lib32-mangohud: MangoHud for 32-bit games (needs Arch [multilib]; see README)'
+            'umu-launcher: Proton launcher outside Steam (needs Arch [multilib]; see README)'
+            'antimicrox: map gamepad buttons to keys (needs Arch [extra]; see README)'
+            'openrgb: RGB lighting control (needs Arch [extra]; see README)'
             'electron-cash-git: Bitcoin Cash wallet, AUR (needs Arch [extra]; see README)'
             'arch-update: update notifier, AUR (needs Arch [extra]; see README)'
             'bpftune-openrc: OpenRC service for bpftune'

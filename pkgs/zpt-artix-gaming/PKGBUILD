@@ -1,0 +1,44 @@
+# Reference: Artix's beta gaming ISO profiles, iso-profiles wip branch at commit
+# 14c737deee84a4406dd7313fba263618dbdf1f37 (gaming-plasma/ and gaming-xfce/ root-overlay, identical
+# for these files). Ported: vm.max_map_count (80-gameperf.conf), games group memlock (0-gaming.conf,
+# without its nofile 524288, which would lower 30-nofile.conf's hard 1048576 for the group),
+# local.d/0-gaming.start (zpt-artix-gaming.install), snd_virmidi, and the dinit timidity user service
+# (an OpenRC user service, timidity.initd) with its soundfont line (timidity.cfg).
+# Not ported:
+# - vm.swappiness=10: fights zram; zpt-artix-settings uses 100.
+# - min_free_kbytes=1 GB and the tmpfiles file's other vm and kernel.sched_* writes: CachyOS's tuning
+#   (zpt-artix-settings) leaves them at kernel defaults.
+# - THP tmpfiles knobs: zpt-artix-settings ships CachyOS's thp.conf (defrag defer+madvise) instead.
+# - debugfs sched knobs: they tune EEVDF's slices and don't apply under scx.
+# - PulseAudio daemon.conf: PipeWire is used.
+# - linux-zen: the CachyOS EAC kernel is used.
+# - Demo games, desktop, lightdm, wallpaper and skel files: ISO setup, not tuning.
+pkgname=zpt-artix-gaming
+pkgver=20261121
+pkgrel=1
+pkgdesc="Gaming settings from Artix's gaming ISO: vm.max_map_count, games group memlock, MIDI"
+arch=(any)
+url="https://gitea.artixlinux.org/artix/iso-profiles"
+license=('BSD-2-Clause')
+depends=(openrc)
+optdepends=('timidity++: for MIDI music (needs Arch [extra]; see README)'
+            'soundfont-generaluser: for MIDI music, AUR (not built here; see README)'
+            'pipewire-jack: JACK output to PipeWire for the timidity service')
+backup=(etc/timidity/zpt-artix-gaming.cfg)
+install=zpt-artix-gaming.install
+source=(80-gameperf.conf 0-gaming.conf snd_virmidi.conf timidity.cfg timidity.initd LICENSE)
+sha256sums=('de612d6de949605119ba07a9bede67b17ec324c07e605f2700ba2579ec87b48b'
+            '4382f919553243cc8c1e658ab1038f03d771dee2b6ed417f6bb14c9fe9b2a502'
+            '6e4e26cdb05db4541e4e0682e7164515ec0a8f9242df00c37499cefc377e086b'
+            'be33b2ff5fe14d1bd3e0d83a83517c35116574ad0629a5f23c13f8d2716bc46c'
+            '5dee90881a0c28f07e4a09fd9d8290320f08ce57b9fb88a149559d4f93baf6ee'
+            '12cb0b32ba6b4cc58dd0355c9e1f0e29018433dbc802483a2886c319df6cc885')
+
+package() {
+  install -Dm644 80-gameperf.conf -t "${pkgdir}/usr/lib/sysctl.d/"
+  install -Dm644 0-gaming.conf -t "${pkgdir}/etc/security/limits.d/"
+  install -Dm644 snd_virmidi.conf -t "${pkgdir}/usr/lib/modules-load.d/"
+  install -Dm644 timidity.cfg "${pkgdir}/etc/timidity/zpt-artix-gaming.cfg"
+  install -Dm755 timidity.initd "${pkgdir}/etc/user/init.d/timidity"
+  install -Dm644 LICENSE -t "${pkgdir}/usr/share/licenses/${pkgname}/"
+}
