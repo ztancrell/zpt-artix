@@ -6,3 +6,4 @@ pkgs/*/*/
 *.pkg.tar.*
 *.log
 pkgs/*/*.tar.*
+pkgs/firefox-nightly-bin/latest.txt

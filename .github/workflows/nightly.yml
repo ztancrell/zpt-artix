@@ -1,0 +1,95 @@
+# Rebuild only firefox-nightly-bin from Mozilla's current Nightly, sign it with the zpt-artix key and add it
+# to the published release "repo" in place of the old one, without rebuilding the other packages. Skipped
+# when the published package is already that Nightly. See README "CI".
+name: nightly
+on:
+  schedule:
+    - cron: '43 11 * * *'  # daily, after Mozilla's morning (UTC) Nightly
+  workflow_dispatch:
+permissions:
+  contents: write
+# Shared with repo.yml: the two never write the release at once. A run that starts while another waits in
+# the group cancels the waiting one (GitHub keeps one pending run per group).
+concurrency:
+  group: repo
+defaults:
+  run:
+    shell: bash
+env:
+  KEY: 473D2CE689E0FE660D43FD715566DC3F8C6B2B75  # zpt-artix.asc
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container: docker.io/artixlinux/artixlinux:base-devel
+    steps:
+      - name: Set up container
+        run: |
+          pacman -Syu --noconfirm --needed base-devel git github-cli
+          useradd -m builder
+          echo 'builder ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/builder
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+        with:
+          # Package builds run third-party code as builder (NOPASSWD sudo): keep the token out of .git/config.
+          persist-credentials: false
+      - name: Check for a new Nightly
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd pkgs/firefox-nightly-bin
+          # Writes latest.txt, which makepkg reuses below: the check and the build see the same Nightly.
+          source PKGBUILD
+          pkg="$pkgname-$pkgver-$pkgrel-${arch[0]}.pkg.tar.zst"
+          if gh release view repo -R "$GITHUB_REPOSITORY" --json assets -q '.assets[].name' | grep -qxF "$pkg"; then
+            echo "$pkg is already published"; echo new=false >> "$GITHUB_OUTPUT"
+          else
+            echo "new: $pkg"; echo new=true >> "$GITHUB_OUTPUT"
+          fi
+      - name: Build
+        if: steps.check.outputs.new == 'true'
+        run: |
+          chown -R builder .
+          # As repo.yml, minus the local [zpt-artix] repo: firefox-nightly-bin needs no other zpt-artix package.
+          sudo -H -u builder env MAKEPKG_EXTRA="-s --noconfirm -c" ./build.sh pkgs/firefox-nightly-bin/
+          # build.sh's unsigned db holds only this package: replace it with the published one.
+          rm -v repo/zpt-artix.*
+      - name: Download the published db
+        if: steps.check.outputs.new == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download repo -R "$GITHUB_REPOSITORY" -D repo -p 'zpt-artix.*.tar.zst' -p 'zpt-artix.*.tar.zst.sig'
+      - name: Sign package and db
+        if: steps.check.outputs.new == 'true'
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          GNUPGHOME=$(mktemp -d)  # separate from export, so a mktemp failure stops the step
+          export GNUPGHOME
+          # The key has a passphrase and there is no pinentry here: every gpg call, repo-add's too,
+          # reads it from a file in this throwaway GNUPGHOME.
+          umask 077
+          printf '%s' "$GPG_PASSPHRASE" > "$GNUPGHOME/passphrase"
+          printf 'pinentry-mode loopback\npassphrase-file %s\n' "$GNUPGHOME/passphrase" > "$GNUPGHOME/gpg.conf"
+          gpg --batch --import <<< "$GPG_PRIVATE_KEY"
+          cd repo
+          for f in *.pkg.tar.zst; do gpg --batch -u "$KEY" --detach-sign "$f"; done
+          # --verify checks the published db's signature before changing it; the new entry replaces the old one.
+          repo-add --sign --verify --key "$KEY" zpt-artix.db.tar.zst *.pkg.tar.zst
+      - name: Publish to rolling release "repo"
+        if: steps.check.outputs.new == 'true' && github.ref == 'refs/heads/master'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir dist && cp -L repo/* dist/  # real files: pacman fetches zpt-artix.db, not the symlink target
+          r=(repo -R "$GITHUB_REPOSITORY")
+          # As repo.yml: the package first, the db last, the old firefox-nightly-bin only after the new db is up.
+          shopt -s extglob
+          gh release upload "${r[@]}" --clobber dist/!(zpt-artix.*)
+          gh release upload "${r[@]}" --clobber dist/zpt-artix.*
+          gh release view "${r[@]}" --json assets -q '.assets[].name' | sed -n '/^firefox-nightly-bin-/p' | sort |
+            comm -23 - <(ls dist | sort) | while read -r a; do gh release delete-asset "${r[@]}" "$a" --yes; done
+          # GitHub rewrites some characters in asset names; any rename would break pacman downloads.
+          missing=$(comm -23 <(ls dist | sort) <(gh release view "${r[@]}" --json assets -q '.assets[].name' | sort))
+          [ -z "$missing" ] || { echo "missing on the release: $missing"; exit 1; }

@@ -154,7 +154,8 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
       `~/.config/kdeglobals` (Artix-dark) from `/etc/skel` that overrides it; move it away to get
       Homestead's. Depends on dex, breeze-icons, ttf-dejavu, xcursor-neutral, and
       xed and audacious (key bindings); zenity (tint2 clock) and geany (menu's config editor) are
-      optional. The `firefox-nightly` key binding has no Artix package. Licence unknown: the theme is
+      optional. The `firefox-nightly` key binding has no Artix package (Superseded: `firefox-nightly-bin`
+      from this repo installs `/usr/bin/firefox-nightly`). Licence unknown: the theme is
       the owner's, `KDE-classic`'s source is unknown, six sounds are sound-theme-freedesktop's.
       Upgrading from `openbox-homestead` 2, `tint2-homestead` 1 or `obmenu-generator` 1 leaves their
       stock files in place (pacman keeps existing `/etc` files) and installs Homestead's as `.pacnew`:
@@ -255,12 +256,22 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
       namespaces are unavailable.
     - `heroic-games-launcher-bin` 2.22.4 (AUR, unchanged; upstream's
       `Heroic-2.22.4-linux-x64.pacman`, in `/opt/Heroic`).
+  - `firefox-nightly-bin` (MPL/GPL/LGPL): the AUR's PKGBUILD (which pins one dated build), changed so
+    every build is Mozilla's current Nightly: its version and buildid come from the newest
+    `firefox-<version>.en-US.linux-x86_64.json` in Mozilla's `latest-mozilla-central`, cached in
+    `latest.txt` (not committed) for an hour so one build sees one Nightly. The tarball is checked
+    against its `.asc` and Mozilla's release key in `keys/pgp` (fingerprint
+    `14F26682D0916CDD81E37B6D61B7B526D98F0353`); it has no fixed sha512. Installed into
+    `/usr/lib/firefox-nightly`, with `/usr/bin/firefox-nightly`, `firefox-nightly.desktop` and the
+    AUR's `policies.json`, which turns off Firefox's own updater: pacman updates it, from
+    `.github/workflows/nightly.yml` (see [CI](#ci)). Firefox keeps a profile per install folder, so
+    after moving from the tarball it opens a new profile: pick the old one in `about:profiles`.
   - Apps and libraries in no Arch or Artix repo, built from the AUR's PKGBUILD (named in each
     one's first line), unchanged: `vkbasalt` 0.3.2.10, `simple-mtpfs` 0.4.0,
     `jmtpfs` 0.5, `amdtop` 0.2.6, `python311` 3.11.18, `libpng12` 1.2.59, `ocs-url` 3.1.0, and
     the `-git` packages `parole-git` and `bpftune-git`, which build upstream's newest commit (their
     version changes with each build; `bpftune-git` installs a systemd unit, unused on OpenRC).
-  - `zpt-artix-apps`: meta-package for everyday apps: thunderbird, `obsidian-bin`,
+  - `zpt-artix-apps`: meta-package for everyday apps: `firefox-nightly-bin`, thunderbird, `obsidian-bin`,
     qbittorrent, audacious, steam, lutris, `heroic-games-launcher-bin`, mangohud, gamemode,
     gamescope, protontricks, git, github-cli, htop, fastfetch, ripgrep, flatpak, lact with
     `lact-openrc`, and the AUR packages above. Its optdepends name the rest, which a stock
@@ -279,7 +290,10 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
     unpacked into a user-writable folder such as `~/.local/share/firefox-nightly`, where it updates
     itself, with `~/.local/bin/firefox-nightly` linked to its `firefox` (the name the Homestead
     rc.xml runs) and a `firefox-nightly.desktop`. Upgrading from 1-2 leaves firefox installed;
-    `sudo pacman -Rs firefox` removes it.
+    `sudo pacman -Rs firefox` removes it. Superseded since 1-5: it depends on `firefox-nightly-bin`
+    (above). A tarball install left in place still wins, as `~/.local/bin/firefox-nightly` and
+    `~/.local/share/applications/firefox-nightly.desktop` come before the package's: delete those two
+    and the tarball's folder to use the package.
 - Mirrored, not built: `linux-cachyos-eac` (7.3.5-2) and `cachyos-eac-signing-key` (1-2) are
   CachyOS's signed packages, copied into `repo/` unchanged with their `.sig` by `mirror-cachyos.sh`.
   CI then deletes CachyOS's `.sig` and signs them with the zpt-artix key, like every other package.
@@ -318,7 +332,7 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
   as the local `[zpt-artix]` repo (unsigned, container only).
 - `test-openrc.sh`: checks an installed OpenRC service, see [Test an OpenRC service](#test-an-openrc-service).
 - `repo/`: the built local repo (not committed).
-- `.github/workflows/repo.yml`: CI, see [CI](#ci).
+- `.github/workflows/repo.yml`, `.github/workflows/nightly.yml`: CI, see [CI](#ci).
 
 ## Build
 
@@ -375,6 +389,15 @@ means the daemon process is running). The boot check stays manual:
    in place, so it always mirrors the current repo and is never missing: new packages and `.sig` files
    first, then `zpt-artix.db`/`.files` (+ `.sig`), then it deletes assets no longer in the repo.
    Scheduled runs stop before this step: they never publish.
+
+`.github/workflows/nightly.yml` runs daily (11:43 UTC) and by hand (`gh workflow run nightly`). It
+rebuilds only `firefox-nightly-bin`, so plain `sudo pacman -Syu` gets Mozilla's current Nightly. In
+the same container it reads the Nightly's version from Mozilla and stops if the release already has
+that package; else it builds it with `build.sh`, downloads the published `zpt-artix.db`/`.files`,
+signs the package and db as above (`repo-add --verify` checks the published db's signature first),
+and on `master` uploads the package, then the db, then deletes the old `firefox-nightly-bin`
+assets. It shares `repo.yml`'s concurrency group, so the two never write the release at once; a
+run that starts while another waits cancels the waiting one.
 
 Results: <https://github.com/ztancrell/zpt-artix/actions>. Signing key `zpt-artix.asc`, fingerprint
 `473D2CE689E0FE660D43FD715566DC3F8C6B2B75`.
