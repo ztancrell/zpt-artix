@@ -6,7 +6,7 @@
 # Usage: ./mirror-cachyos.sh  (MIRROR overrides the mirror). For a new kernel, edit PKGS and run again.
 cd "$(dirname "$0")" || exit 1
 export PATH=/usr/bin:$PATH  # a non-zstd "zstd" in ~/.local/bin breaks db compression
-PKGS="linux-cachyos-eac-7.3.3-2-x86_64 cachyos-eac-signing-key-1-2-any"
+PKGS="linux-cachyos-eac-7.3.5-2-x86_64 cachyos-eac-signing-key-1-2-any"
 MIRROR=${MIRROR:-https://cdn77.cachyos.org/repo/x86_64/cachyos}
 # CachyOS <admin@cachyos.org>, from cachyos-keyring 20240331-1 (/usr/share/pacman/keyrings/cachyos.gpg).
 FPR=882DCFE48E2051D48E2562ABF3B607488DB35A47

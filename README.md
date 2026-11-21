@@ -280,7 +280,7 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
     itself, with `~/.local/bin/firefox-nightly` linked to its `firefox` (the name the Homestead
     rc.xml runs) and a `firefox-nightly.desktop`. Upgrading from 1-2 leaves firefox installed;
     `sudo pacman -Rs firefox` removes it.
-- Mirrored, not built: `linux-cachyos-eac` (7.3.3-2) and `cachyos-eac-signing-key` (1-2) are
+- Mirrored, not built: `linux-cachyos-eac` (7.3.5-2) and `cachyos-eac-signing-key` (1-2) are
   CachyOS's signed packages, copied into `repo/` unchanged with their `.sig` by `mirror-cachyos.sh`.
   CI then deletes CachyOS's `.sig` and signs them with the zpt-artix key, like every other package.
   The kernel and the systemd-boot file must keep CachyOS's Secure Boot signature, so they are never
