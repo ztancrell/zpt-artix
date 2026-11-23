@@ -7,17 +7,19 @@
 # six of the eight sounds are sound-theme-freedesktop's files (see its CREDITS), desktop-login.oga and
 # device-added.oga are of unknown origin.
 pkgname=homestead-theme
-_commit=8b2319a19d4458b88a2f0e9223eb347a9ff61317
-pkgver=r28.g8b2319a
+_commit=29442979cb0ed1998d4d452b30614741e373321d
+pkgver=r30.g2944297
 pkgrel=1
 pkgdesc="Homestead desktop theme and default Openbox, tint2, kitty, obmenu-generator, GTK, dunst and KDE settings"
 arch=('any')
 url="https://github.com/ztancrell/homestead"
 license=('LicenseRef-unknown')
-# dex: the autostart runs the XDG autostart entries (tray applets) with it. xed, audacious, brightnessctl and
+# dex: the autostart runs the XDG autostart entries (tray applets) with it. xed, playerctl (media keys),
+# mpv-mpris (pulls mpv; W-m opens mpv, and the plugin lets playerctl control it), brightnessctl and
 # libnotify (notify-send, for homestead-osd): rc.xml key bindings; the rest of what autostart and rc.xml run
 # comes with zpt-artix-desktop.
-depends=('dex' 'breeze-icons' 'ttf-dejavu' 'xcursor-neutral' 'xed' 'audacious' 'brightnessctl' 'libnotify')
+depends=('dex' 'breeze-icons' 'ttf-dejavu' 'xcursor-neutral' 'xed' 'playerctl' 'mpv-mpris' 'brightnessctl'
+         'libnotify')
 optdepends=('zenity: calendar on a click on the tint2 clock'
             'geany: editor for the menu entries that edit the obmenu-generator config')
 makedepends=('git')

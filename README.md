@@ -159,7 +159,11 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
       homestead-theme depends on brightnessctl and libnotify for this. brightnessctl's udev rule gives
       `/sys/class/backlight/*/brightness` to the `video` group and `/sys/class/leds/*/brightness` to
       `input`, so the keyboard backlight keys need the user in `input`
-      (`sudo usermod -aG input <user>`, then log in again); otherwise they do nothing. These are the owner's configs without his monitor
+      (`sudo usermod -aG input <user>`, then log in again); otherwise they do nothing.
+      The media keys (XF86AudioPlay/Next/Prev/Stop) run `playerctl`, so they control any MPRIS
+      player (mpv through mpv-mpris), and W-m opens an empty mpv window to drop files on. Superseded
+      since homestead-theme r30: they ran audacious, which it no longer depends on.
+      These are the owner's configs without his monitor
       layout, Synergy or redshift script, with `loginctl suspend`. Artix's `default-cursors` owns
       `/usr/share/icons/default`, so the cursor comes from `XCURSOR_THEME` in
       `/etc/xdg/openbox/environment` (with `XCURSOR_SIZE` 24 unless already set) and the GTK settings. Override rules: `~/.config/openbox/rc.xml`
@@ -183,7 +187,8 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
       the colours from kdeglobals itself, so they are repeated there). An Artix ISO install copies a
       `~/.config/kdeglobals` (Artix-dark) from `/etc/skel` that overrides it; move it away to get
       Homestead's. Depends on dex, breeze-icons, ttf-dejavu, xcursor-neutral, and
-      xed and audacious (key bindings); zenity (tint2 clock) and geany (menu's config editor) are
+      xed, playerctl and mpv-mpris, which pulls mpv (key bindings), brightnessctl and libnotify
+      (homestead-osd); zenity (tint2 clock) and geany (menu's config editor) are
       optional. The `firefox-nightly` key binding has no Artix package (Superseded: `firefox-nightly-bin`
       from this repo installs `/usr/bin/firefox-nightly`). Licence unknown: the theme is
       the owner's, `KDE-classic`'s source is unknown, six sounds are sound-theme-freedesktop's.
@@ -301,8 +306,9 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
     `jmtpfs` 0.5, `amdtop` 0.2.6, `python311` 3.11.18, `libpng12` 1.2.59, `ocs-url` 3.1.0, and
     the `-git` packages `parole-git` and `bpftune-git`, which build upstream's newest commit (their
     version changes with each build; `bpftune-git` installs a systemd unit, unused on OpenRC).
+    Superseded since `zpt-artix-apps` 1-7: nothing depends on `parole-git`; mpv replaces it.
   - `zpt-artix-apps`: meta-package for everyday apps: `firefox-nightly-bin`, thunderbird, `obsidian-bin`,
-    qbittorrent, audacious, steam, lutris, `heroic-games-launcher-bin`, mangohud, gamemode,
+    qbittorrent, mpv, steam, lutris, `heroic-games-launcher-bin`, mangohud, gamemode,
     gamescope, protontricks, git, github-cli, htop, fastfetch, ripgrep, flatpak, lact with
     `lact-openrc`, `zpt-artix-gaming`, goverlay, vkd3d, lib32-vkd3d, piper, solaar, and the AUR
     packages above. Its optdepends name the rest, which a stock

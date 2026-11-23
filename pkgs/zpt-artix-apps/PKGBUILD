@@ -4,21 +4,21 @@
 # No browser: the owner uses Mozilla's self-updating Firefox Nightly tarball (no Artix package), and the
 # Homestead rc.xml binds firefox-nightly. Superseded since 1-5: depends on this repo's firefox-nightly-bin,
 # which installs /usr/bin/firefox-nightly (README "CI": nightly.yml rebuilds it daily).
-# vkbasalt, simple-mtpfs, jmtpfs, amdtop, python311, libpng12, parole-git, ocs-url and
+# vkbasalt, simple-mtpfs, jmtpfs, amdtop, python311, libpng12, ocs-url and
 # bpftune-git are AUR packages built by this repo. optdepends lists what a stock zpt-artix install can't
 # resolve: Arch [extra]/[multilib] packages, and AUR apps this repo doesn't build (see README).
 pkgname=zpt-artix-apps
 pkgver=1
-pkgrel=6
+pkgrel=7
 pkgdesc="zpt-artix everyday apps: browser, mail, notes, torrents, music, gaming, dev tools"
 arch=('any')
 url="https://github.com/ztancrell/zpt-artix"
 license=('MIT')
-depends=('firefox-nightly-bin' 'thunderbird' 'obsidian-bin' 'qbittorrent' 'audacious'
+depends=('firefox-nightly-bin' 'thunderbird' 'obsidian-bin' 'qbittorrent' 'mpv'
          'steam' 'lutris' 'heroic-games-launcher-bin' 'mangohud' 'gamemode' 'gamescope' 'protontricks'
          'git' 'github-cli' 'htop' 'fastfetch' 'ripgrep' 'flatpak'
          'lact' 'lact-openrc' 'vkbasalt' 'simple-mtpfs' 'jmtpfs' 'amdtop'
-         'python311' 'libpng12' 'parole-git' 'ocs-url' 'bpftune-git'
+         'python311' 'libpng12' 'ocs-url' 'bpftune-git'
          'zpt-artix-gaming' 'goverlay' 'vkd3d' 'lib32-vkd3d' 'piper' 'solaar')
 optdepends=('ghidra: reverse engineering (needs Arch [extra]; see README)'
             'gitea-cli: Gitea command line (needs Arch [extra]; see README)'
