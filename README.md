@@ -1,8 +1,8 @@
 # zpt-artix
 
 My own Artix Linux (OpenRC) pacman repo: OpenRC scripts for services Artix has none for, and
-Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cachy). See
-`../zartix/DESIGN.md` for the idea and decisions.
+Artix rebuilds of packages from zpt-cachy (the owner's CachyOS repo; its GitHub repo was deleted
+on 2026-11-23). See `DESIGN.md` for the idea and decisions.
 
 ## What's here
 
