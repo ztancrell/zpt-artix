@@ -304,9 +304,9 @@ Artix rebuilds of packages from [zpt-cachy](https://github.com/ztancrell/zpt-cac
   - Apps and libraries in no Arch or Artix repo, built from the AUR's PKGBUILD (named in each
     one's first line), unchanged: `vkbasalt` 0.3.2.10, `simple-mtpfs` 0.4.0,
     `jmtpfs` 0.5, `amdtop` 0.2.6, `python311` 3.11.18, `libpng12` 1.2.59, `ocs-url` 3.1.0, and
-    the `-git` packages `parole-git` and `bpftune-git`, which build upstream's newest commit (their
-    version changes with each build; `bpftune-git` installs a systemd unit, unused on OpenRC).
-    Superseded since `zpt-artix-apps` 1-7: nothing depends on `parole-git`; mpv replaces it.
+    `bpftune-git`, which builds upstream's newest commit (its version changes with each build; it
+    installs a systemd unit, unused on OpenRC). Superseded: `parole-git` was built here until
+    `zpt-artix-apps` 1-7 swapped it for mpv; the package is gone from the repo.
   - `zpt-artix-apps`: meta-package for everyday apps: `firefox-nightly-bin`, thunderbird, `obsidian-bin`,
     qbittorrent, mpv, steam, lutris, `heroic-games-launcher-bin`, mangohud, gamemode,
     gamescope, protontricks, git, github-cli, htop, fastfetch, ripgrep, flatpak, lact with
