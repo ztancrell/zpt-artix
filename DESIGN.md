@@ -159,8 +159,20 @@ Checked in the Artix base-devel container, 2026-11-19 (built in `zpt-artix`):
 - 2026-11-23: The T2 packages are ported now, not when macOS drops the MacBookPro16,1:
   `t2-dkms`, `t2-support`, `t2-apps` and `bankstown-lv2` from zpt-cachy, with OpenRC scripts for
   their system daemons, elogind's system-sleep folder for the sleep hooks, OpenRC user services for
-  the sidecar, and `zpt-artix-mac` as the meta-package. Superseded: "Not before that" in the
+  the sidecar, and `zpt-artix-mac` as the meta-package. Superseded (same day): the sidecar is
+  dropped; see the next entry. Superseded: "Not before that" in the
   MacBookPro16,1 entry above. The 2019 Mac is now a zpt-artix target alongside the 2014 Mac.
 - 2026-11-23: These notes moved from `../zartix/DESIGN.md` (gone from disk; restored from the
   2026-11-19 home backup) into this repo. The GitHub repo `ztancrell/zpt-cachy` was deleted on
   2026-11-23; its last clone is in that backup.
+- 2026-11-23: T2 port details, after finding upstream calls systemd tools at runtime:
+  - Dropped: `t2-journal` (needs journald) and `t2-sidecar` (all `systemctl --user`, needs
+    GNOME's Mutter and Sunshine; the owner runs Openbox).
+  - Patched to OpenRC (patches carried in this repo): the fan-control autostart switch,
+    airshare's visibility switch and power-tune's persist use rc-update/rc-service; Touch Bar
+    `run=` keys run their command directly instead of through `systemd-run --user`.
+  - Added: an OpenRC fprintd service with the Touch ID bridge's settings; D-Bus Exec= rewritten to
+    the real binaries for t2-drop and airshare; an elogind sleep hook that re-attaches the Touch Bar
+    after resume.
+  - The 2019 Mac runs Artix's `linux` with `linux-headers` for the T2 DKMS modules. The EAC kernel
+    stays on the desktop; its headers are not mirrored.
