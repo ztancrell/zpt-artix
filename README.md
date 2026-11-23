@@ -301,6 +301,41 @@ on 2026-11-23). See `DESIGN.md` for the idea and decisions.
     AUR's `policies.json`, which turns off Firefox's own updater: pacman updates it, from
     `.github/workflows/nightly.yml` (see [CI](#ci)). Firefox keeps a profile per install folder, so
     after moving from the tarball it opens a new profile: pick the old one in `about:profiles`.
+  - T2 support for the MacBookPro16,1 (2019), ported from zpt-cachy and built from
+    [KaiT2en-Fedora](https://github.com/kaiT2en/KaiT2en-Fedora) at commit
+    `8de95468f08c6db37924bcb8f9adc12c769add71` (version `0.r904.g8de9546`). Package names are upstream's
+    own. Three split PKGBUILDs; each one's header lists what changed for OpenRC.
+    - `t2-dkms`: 12 DKMS packages, one per upstream `dkms.conf`, sources in `/usr/src/<name>-<ver>/`:
+      `t2bce_stack-dkms` (BCE: DMA, core, VHCI/USB, audio, AVE, Sidecar), `t2smc-dkms`, `t2bdrm-dkms`,
+      `t2touchbar-dkms`, `hid_t2magicmouse-dkms`, `t2_precision_trackpad-dkms`, `t2_trackpad_actuator-dkms`,
+      `t2mfi_fastcharge-dkms`, `t2gmux-dkms`, `t2thunderbolt-dkms`, `t2smp-dkms`, `t2sbs-dkms`. Artix's
+      dkms builds them on install for every kernel with headers: Artix's `linux` with `linux-headers`.
+      They don't build for `linux-cachyos-eac`: its headers are not mirrored here and are in no Artix repo.
+    - `t2-support` (no compiling): `t2-dsp` (speaker DSP for PipeWire/WirePlumber), `t2bce_audio-alsa-ucm-conf`,
+      `t2-services-common` (NCM link udev rule, NetworkManager config, and
+      `/usr/lib/elogind/system-sleep/t2-services` in place of `t2-services-suspend.service`), `t2-power-tune`
+      and `t2-blacklist` (`/usr/lib/modprobe.d/t2-blacklist.conf`, see [On the Mac](#on-the-mac-macbookpro161)).
+      `t2-power-tune-openrc.patch`: the app's "Create/Update OpenRC service" button writes the OpenRC
+      script `/etc/init.d/kait2en-power-tune` (`start()` sets the chosen values, `stop()` puts the
+      originals back) and adds it to the default runlevel, in place of a systemd unit and `systemctl enable`.
+    - `t2-apps` (Rust): `t2-fan-control`, `t2-smc-control`, `t2-zone-power`, `t2-force-click`,
+      `t2-kbd-backlight`, `t2-touchbar`, `t2-touchid`, `t2-ave` (t2remote), and the extras `t2-airshare`,
+      `t2-drop`, `t2-debug`, `t2-power-explorer`. No systemd units are shipped; OpenRC scripts in
+      their place are listed in [On the Mac](#on-the-mac-macbookpro161). Patches:
+      `t2-fan-control-openrc.patch` (the app's autostart switch runs `rc-update add/del t2-fancontrol
+      default`), `t2-airshare-openrc.patch` (the "Visible to nearby devices" switch adds and starts, or
+      stops and removes, the `t2-airshare` OpenRC user service) and `t2-touchbar-run-keys.patch` (`run=`
+      keys in `~/.config/kait2en-touchbar/keys.toml` start `sh -c <command>` directly, not through
+      `systemd-run`). `t2-drop` and AirShare's hotspot helper start on demand over D-Bus: their D-Bus
+      service files run the daemons directly (`Exec=`), with no `SystemdService=`.
+    - Not ported: `t2-journal` (it reads the Linux side from journalctl; Artix has no journald) and
+      `t2-sidecar` (it drives its display with `systemctl --user` and needs GNOME's Mutter and a
+      T2-encoding Sunshine build).
+  - `bankstown-lv2`: bass enhancer LV2 plugin ([chadmed/bankstown](https://github.com/chadmed/bankstown),
+    tag 1.1.0, commit `e9829c9bccf5ed73768135c0ddd506f5a6690f9e`), needed by `t2-dsp`.
+  - `zpt-artix-mac`: meta-package for the MacBookPro16,1, replacing zpt-cachy's `zpt-cachy-mac`: Artix's
+    `linux` and `linux-headers` and the 29 T2 packages above (`bankstown-lv2` comes in via `t2-dsp`).
+    Its install message lists the OpenRC services; it enables none.
   - Apps and libraries in no Arch or Artix repo, built from the AUR's PKGBUILD (named in each
     one's first line), unchanged: `vkbasalt` 0.3.2.10, `simple-mtpfs` 0.4.0,
     `jmtpfs` 0.5, `amdtop` 0.2.6, `python311` 3.11.18, `libpng12` 1.2.59, `ocs-url` 3.1.0, and
@@ -517,3 +552,78 @@ Pro (2026-11-19): ly logs into the Openbox session; with `homestead-hidpi`, the 
 cursor, Openbox menu and title bars show at 2x. After a reboot (2026-11-20): the GRUB menu
 shows the 2x `artix-hidpi` theme, the console uses `ter-v32b`, ly still lists Openbox with
 `0-remove-sessions.start` removed, and the volume and screen brightness popups show after login.
+
+## On the Mac (MacBookPro16,1)
+
+Nothing here has run on T2 hardware yet: the 2019 Mac still runs macOS. The packages build and their
+scripts pass `sh -n`; the steps below are untested.
+
+1. The internal keyboard and trackpad sit behind the T2 (BCE); the Artix installer has no T2
+   drivers, so use a USB keyboard and mouse on a USB-C adapter until step 2 is done. Turn off Secure
+   Boot / allow external boot in macOS Recovery's Startup Security Utility first.
+2. Add this repo (see [Install](#install)), then:
+
+   ```sh
+   sudo pacman -Syu zpt-artix-mac
+   ```
+
+   That pulls Artix's `linux` and `linux-headers`; dkms builds the 12 T2 modules for every installed
+   kernel with headers. Not for `linux-cachyos-eac` (no headers for it here or in Artix).
+3. Blacklist: `t2-blacklist` stops the in-tree drivers the modules replace (`acpi_tad applesmc macsmc
+   macsmc_acpi hid_apple hid_appletb_bl hid_appletb_kbd hid_magicmouse appletbdrm apple_bce
+   apple_mfi_fastcharge apple_gmux sbs`). mkinitcpio's `modconf` hook copies it into the initramfs:
+   rebuild once after installing, `sudo mkinitcpio -P`. Optional, as upstream's installer does: load
+   the keyboard, SMC and battery drivers early (keyboard at a LUKS prompt, clock set early) with
+   `MODULES=(t2bce_dma t2bce_core t2bce_vhci t2hid t2smc t2sbs)` in `/etc/mkinitcpio.conf`.
+4. Kernel command line, by hand (upstream's `scripts/fedora/install-kernel-args.sh` has the current
+   list): `initcall_blacklist=cmos_init,magicmouse_driver_init` (`rtc_cmos` is built in, so
+   modprobe.d can't stop it; t2smc provides the RTC).
+5. OpenRC services. None is in a runlevel after install; add the ones you use:
+
+   ```sh
+   sudo rc-update add t2-fancontrol default
+   sudo rc-update add t2-smc-gaugingd default
+   sudo rc-update add t2-zonepowerd default
+   sudo rc-update add t2-force-click default
+   sudo rc-update add t2-kbd-backlight default
+   sudo rc-update add kait2en-t2-remote default
+   sudo rc-update add kait2en-t2-touchid default
+   sudo rc-update add fprintd default
+   sudo rc-update add kait2en-touchbar-attach default
+   sudo groupadd --system kait2en-touchbar && sudo usermod -aG kait2en-touchbar "$USER"
+   rc-update --user add kait2en-touchbar default   # after logging in again
+   ```
+
+   | Service | Package | Replaces (upstream systemd) | Kind |
+   |---|---|---|---|
+   | `t2-fancontrol` | t2-fan-control | `t2-fancontrol.service` | supervise-daemon |
+   | `t2-smc-gaugingd` | t2-smc-control | `t2-smc-gaugingd.service` | supervise-daemon |
+   | `t2-zonepowerd` | t2-zone-power | `t2-zonepowerd.service` | supervise-daemon |
+   | `t2-force-click` | t2-force-click | `t2-force-click.service` | supervise-daemon |
+   | `t2-kbd-backlight` | t2-kbd-backlight | `t2-kbd-backlight.service` | supervise-daemon, needs dbus |
+   | `kait2en-t2-remote` | t2-ave | `kait2en-t2-remote.service` | supervise-daemon; loads `t2bce_ave` (and `t2bce_sidecar` if present) first |
+   | `kait2en-t2-touchid` | t2-touchid | `kait2en-t2-touchid.service` | supervise-daemon; reads `/etc/kait2en/t2-touchid.conf` |
+   | `fprintd` | t2-touchid | the `fprintd.service.d` drop-in | supervise-daemon runs `/usr/lib/fprintd --no-timeout` on the bridge's virtual device; needs `kait2en-t2-touchid` |
+   | `kait2en-touchbar-attach` | t2-touchbar | `kait2en-touchbar-attach.service` | start-only, 5 tries |
+   | `kait2en-touchbar` (user) | t2-touchbar | user `kait2en-touchbar.service` | `/etc/user/init.d`, supervise-daemon |
+   | `t2-airshare` (user) | t2-airshare | user `t2-airshare.service` | `/etc/user/init.d`; the app's switch manages it |
+   | elogind hook `t2-services` | t2-services-common | `t2-services-suspend.service` | `/usr/lib/elogind/system-sleep/` |
+   | elogind hook `kait2en-touchbar` | t2-touchbar | the udev rule's `SYSTEMD_WANTS` on resume | `/usr/lib/elogind/system-sleep/` |
+
+   - Touch Bar: `kait2en-touchbar-attach` switches the Touch Bar from Apple's firmware key row to the
+     display the `kait2en-touchbar` user service draws on. Upstream's udev rule starts it through
+     `SYSTEMD_WANTS`, which does nothing on OpenRC: it runs at boot instead, and the elogind hook runs
+     the same attach after each resume while the service is started. Upstream only attaches when the
+     user service is enabled (`ExecCondition`); here that is your choice of adding both or neither.
+     Without the user service the attached Touch Bar stays black. The `kait2en-touchbar` group
+     doesn't exist until you create it (upstream's installer does; no package here does): the udev
+     rule gives that group the Touch Bar devices.
+   - Touch ID: fprintd is normally started by D-Bus with no settings. The `fprintd` service runs it with
+     `FP_VIRTUAL_DEVICE_STORAGE=/run/t2-touchid/fprint.sock` and keeps it running, so it holds the D-Bus
+     name and D-Bus starts no second copy. If a D-Bus-started copy got there first, this one can't take
+     the name and exits; supervise-daemon retries every 5 s until the other copy exits when idle.
+     Stopping `kait2en-t2-touchid` stops `fprintd` too, so PAM falls through to the password.
+   - `t2-drop` and AirShare's hotspot helper start on demand over D-Bus. `t2-drop` needs AirDrop (AWDL)
+     support in brcmfmac, which is in upstream's wireless patches, not in Artix's kernel.
+   - systemd sandboxing in upstream's units (`ProtectSystem=strict` and the like) has no OpenRC
+     equivalent and is not carried.

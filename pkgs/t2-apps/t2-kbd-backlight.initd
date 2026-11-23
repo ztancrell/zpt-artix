@@ -1,0 +1,19 @@
+#!/usr/bin/openrc-run
+
+# In place of upstream's t2-kbd-backlight.service (Restart=on-failure, RestartSec=2). Its sandboxing
+# (ProtectSystem=strict and the like) has no OpenRC equivalent and is not carried.
+description="T2 keyboard backlight idle timeout"
+
+supervisor=supervise-daemon
+command="/usr/bin/t2-kbd-backlight"
+respawn_delay=2
+respawn_max=0
+# Keep the daemon's output, so a failed start or respawn says why.
+output_log="/var/log/t2-kbd-backlight.log"
+error_log="/var/log/t2-kbd-backlight.log"
+
+depend() {
+	# It follows sleep through elogind's login1 signals on the system bus.
+	need dbus
+	after udev elogind
+}

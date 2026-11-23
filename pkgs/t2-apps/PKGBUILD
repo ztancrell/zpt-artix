@@ -1,0 +1,241 @@
+# KaiT2en-Fedora's Rust T2 apps and services. t2-touchid and t2-ave follow upstream's RPM specs
+# (t2-services/*/packaging); the apps follow upstream's Makefiles minus their systemctl calls, with
+# /usr instead of /usr/local. udev rules and configs are upstream's. Upstream's RPM scriptlets only
+# migrate installs made by its old installer script, so they are not carried; services are left for
+# the user to enable. t2-touchid's SELinux policy is skipped. Ported from zpt-cachy, for OpenRC:
+# - No systemd units are shipped. OpenRC scripts in /etc/init.d (*.initd here) replace the system units:
+#   t2-fancontrol, t2-smc-gaugingd, t2-zonepowerd, t2-force-click, t2-kbd-backlight, kait2en-t2-touchid,
+#   kait2en-t2-remote (t2-ave) and kait2en-touchbar-attach (a start-only script). fprintd (t2-touchid)
+#   replaces upstream's fprintd.service drop-in. OpenRC user services in /etc/user/init.d replace the
+#   user units: kait2en-touchbar and t2-airshare (*.user.initd).
+# - /usr/lib/elogind/system-sleep/kait2en-touchbar (kait2en-touchbar.sleep) re-attaches the Touch Bar
+#   after resume, in place of the udev rule's SYSTEMD_WANTS (which does nothing on OpenRC).
+# - The D-Bus activation files of t2-drop (org.t2drop) and t2-airshare (org.t2airshare.QuickShareHotspot)
+#   run the daemons directly (Exec=), without SystemdService=; their units are not shipped.
+# - Patches: t2-fan-control-openrc.patch (apps/t2-fan-control/src/service.rs: the autostart switch runs
+#   rc-update add/del t2-fancontrol default and reads rc-update show default), t2-airshare-openrc.patch
+#   (apps/t2-airshare/src/bin/t2-airshare/main.rs: the visibility switch runs rc-update --user and
+#   rc-service --user for the t2-airshare user service), t2-touchbar-run-keys.patch
+#   (apps/t2-touchbar/src/keys.rs: run= keys start sh -c <command> directly, in their own process group,
+#   not through systemd-run --user).
+# - Not packaged: t2-journal (it reads the Linux side from journalctl; Artix has no journald).
+# - Systemd sandboxing (ProtectSystem= and the like) has no OpenRC equivalent and is not carried.
+pkgbase=t2-apps
+pkgname=('t2-fan-control' 't2-smc-control' 't2-zone-power' 't2-force-click' 't2-kbd-backlight'
+         't2-touchbar' 't2-touchid' 't2-ave'
+         't2-airshare' 't2-drop' 't2-debug' 't2-power-explorer')
+_commit=8de95468f08c6db37924bcb8f9adc12c769add71
+pkgver=0.r904.g8de9546
+pkgrel=1
+arch=('x86_64')
+url="https://github.com/kaiT2en/KaiT2en-Fedora"
+license=('GPL-3.0-or-later')
+makedepends=('git' 'cargo' 'glib2' 'gtk4' 'libadwaita' 'libinput' 'libudev')
+source=("kait2en::git+https://github.com/kaiT2en/KaiT2en-Fedora.git#commit=${_commit}"
+        t2-fan-control-openrc.patch t2-airshare-openrc.patch t2-touchbar-run-keys.patch
+        t2-fancontrol.initd t2-smc-gaugingd.initd t2-zonepowerd.initd t2-force-click.initd
+        t2-kbd-backlight.initd kait2en-t2-touchid.initd fprintd.initd kait2en-t2-remote.initd
+        kait2en-touchbar-attach.initd kait2en-touchbar.sleep kait2en-touchbar.user.initd t2-airshare.user.initd)
+sha256sums=('SKIP'
+            'd8b045e71b2e6c799100f123c17e4722d72aa2fc4ab18ab874ac5265ed42a8c4'
+            'ff534bf2c1d986f60690405807feb5a44c2647184ae90d89923cfd9211002324'
+            'fb7f11177bfcda58ce330a730bc772e6ba80ef7dd86f13f2c4b91fc9f7b8710f'
+            'fb1f79ccbc42ca3ff7ed85dc3c4b5f0064491264f6c11547bd9577fea9383cea'
+            '745a0303032496cf44562021c81740cbb612dfcf63795b5cc93e95faa2b2eeb0'
+            '7883ec491c1df1b684b62c863fbef8cbec3fcd6773a9d728cd40a8a932a61023'
+            'b101c4420a3022e6e47af67d9efb23b4a2408da0bf19248c219687826497286d'
+            'a6c310465fa894f86fa0eccc1647bdad388a75600c9606827e1e4319fc8bc4a9'
+            '93daf81544e2f7eaa35598c663825511ed753a215a64413b794cfd2cf906ab10'
+            'c4cdcac729820a73e5a7277840b5766ee966556490bffd4d364ddc90fb1972ff'
+            '8423d58aac703f09d813198ff989a0b9f5df1e519131bade16babe019add9e7b'
+            'cb5202cf8b4c84293d4a657f8d7c44dd0b2f998470d0563fb2e05c661cbeb397'
+            '75cfebbf5513592a3aabebdad87b058a7072e59a818848748ad2a5026c33a2ec'
+            '74c823d83b65602c3521803e8c08b572220c43aabb52a39ada0c4579676f5d8f'
+            '1adb66125e4c9870612ec5dcf59b27ccf9eae24fa2a30d7692874676d2e5a045')
+options=('!lto')
+
+_apps=(t2-fan-control t2-smc-control t2-zone-power t2-force-click t2-kbd-backlight t2-touchbar
+       t2-airshare t2-drop t2-debug t2-power-explorer)
+_services=(t2-touchid t2-ave)
+
+pkgver() {
+  cd kait2en
+  printf "0.r%s.g%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+}
+
+prepare() {
+  cd kait2en
+  local d
+  for d in t2-fan-control-openrc t2-airshare-openrc t2-touchbar-run-keys; do
+    patch -Np1 -i "$srcdir/$d.patch"
+  done
+  sed -i 's|sudo systemctl restart t2-kbd-backlight|sudo rc-service t2-kbd-backlight restart|' \
+    apps/t2-kbd-backlight/config/kbd-backlight.toml
+  for d in "${_apps[@]}"; do
+    grep -rlZ /usr/local apps/$d --exclude=Makefile --exclude='*.md' | xargs -0r sed -i 's|/usr/local|/usr|g'
+    (cd apps/$d && cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')")
+  done
+  for d in "${_services[@]}"; do
+    (cd t2-services/$d && cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')")
+  done
+}
+
+build() {
+  cd kait2en
+  export RUSTUP_TOOLCHAIN=stable CARGO_TARGET_DIR="$srcdir/target"
+  local d
+  for d in "${_apps[@]}"; do
+    (cd apps/$d && cargo build --release --frozen)
+  done
+  for d in "${_services[@]}"; do
+    make -C t2-services/$d build CARGO_FLAGS=--frozen TARGET_DIR="$srcdir/target"
+  done
+}
+
+_licenses() {
+  install -Dm644 "$srcdir"/kait2en/{LICENSE,LICENSING.md,AUTHORS} -t "$pkgdir/usr/share/licenses/$pkgname"
+}
+
+# GTK app with a daemon: _gtkapp <dir> <app id> <binary> <OpenRC script>
+_gtkapp() {
+  cd "$srcdir/kait2en/apps/$1"
+  install -Dm755 "$srcdir/target/release/$3" -t "$pkgdir/usr/bin"
+  install -Dm644 "$2.desktop" -t "$pkgdir/usr/share/applications"
+  install -Dm644 "assets/icons/hicolor/scalable/apps/$2.svg" -t "$pkgdir/usr/share/icons/hicolor/scalable/apps"
+  install -Dm755 "$srcdir/$4.initd" "$pkgdir/etc/init.d/$4"
+  _licenses
+}
+
+package_t2-fan-control() {
+  pkgdesc="T2 Mac fan control daemon and GTK app (needs t2smc) (from KaiT2en)"
+  depends=('gtk4' 'libadwaita' 'glib2' 't2smc-dkms' 'openrc')
+  _gtkapp t2-fan-control org.t2fancontrol.gtk t2-fancontrol-gtk t2-fancontrol
+}
+
+package_t2-smc-control() {
+  pkgdesc="T2 SMC battery-gauging daemon and GTK app (needs t2smc) (from KaiT2en)"
+  depends=('gtk4' 'libadwaita' 'glib2' 't2smc-dkms' 'openrc')
+  _gtkapp t2-smc-control org.t2smccontrol.gtk t2-smc-control t2-smc-gaugingd
+}
+
+package_t2-zone-power() {
+  pkgdesc="T2 SMC zone power budget daemon and GTK app (needs t2smc) (from KaiT2en)"
+  depends=('gtk4' 'libadwaita' 'glib2' 't2smc-dkms' 'openrc')
+  _gtkapp t2-zone-power org.t2zonepower.gtk t2-zonepower-gtk t2-zonepowerd
+}
+
+package_t2-force-click() {
+  pkgdesc="T2 trackpad force-click daemon and GTK app (from KaiT2en)"
+  depends=('gtk4' 'libadwaita' 'glib2' 't2_precision_trackpad-dkms' 't2_trackpad_actuator-dkms' 'elogind' 'openrc')
+  _gtkapp t2-force-click org.t2forceclick.gtk t2-force-click t2-force-click
+}
+
+package_t2-kbd-backlight() {
+  pkgdesc="T2 keyboard backlight idle/ambient daemon (from KaiT2en)"
+  depends=('libinput' 'libudev' 'openrc')
+  backup=('etc/kait2en/kbd-backlight.toml')
+  cd "$srcdir/kait2en/apps/t2-kbd-backlight"
+  install -Dm755 "$srcdir/target/release/t2-kbd-backlight" -t "$pkgdir/usr/bin"
+  install -Dm755 "$srcdir/t2-kbd-backlight.initd" "$pkgdir/etc/init.d/t2-kbd-backlight"
+  install -Dm644 config/kbd-backlight.toml -t "$pkgdir/etc/kait2en"
+  _licenses
+}
+
+package_t2-touchbar() {
+  pkgdesc="T2 Touch Bar daemon kait2en-touchbar (needs t2bdrm, t2touchbar) (from KaiT2en)"
+  depends=('libinput' 'libudev' 't2bdrm-dkms' 't2touchbar-dkms' 'elogind' 'openrc')
+  backup=('etc/kait2en/touchbar.toml')
+  make -C "$srcdir/kait2en/apps/t2-touchbar" install PREFIX=/usr DESTDIR="$pkgdir" BIN_SRC="$srcdir/target/release/kait2en-touchbar"
+  rm -f "$pkgdir/usr/share/licenses/kait2en-touchbar/THIRD-PARTY-NOTICES.md"
+  rmdir "$pkgdir/usr/share/licenses/kait2en-touchbar"
+  rm -r "$pkgdir/usr/lib/systemd"
+  install -Dm755 "$srcdir/kait2en-touchbar-attach.initd" "$pkgdir/etc/init.d/kait2en-touchbar-attach"
+  install -Dm755 "$srcdir/kait2en-touchbar.user.initd" "$pkgdir/etc/user/init.d/kait2en-touchbar"
+  install -Dm755 "$srcdir/kait2en-touchbar.sleep" "$pkgdir/usr/lib/elogind/system-sleep/kait2en-touchbar"
+  install -Dm644 "$srcdir/kait2en/apps/t2-touchbar/THIRD-PARTY-NOTICES.md" -t "$pkgdir/usr/share/licenses/$pkgname"
+  _licenses
+}
+
+_service() {
+  make -C "$srcdir/kait2en/t2-services/$1" install PREFIX=/usr DESTDIR="$pkgdir" TARGET_DIR="$srcdir/target" \
+    SYSTEMD_UNIT_DIR=/usr/lib/systemd/system LIBEXECDIR=/usr/libexec
+  rm -r "$pkgdir/usr/lib/systemd"
+  _licenses
+}
+
+package_t2-touchid() {
+  pkgdesc="Touch ID (T2 biometric sensor) bridge for fprintd (from KaiT2en)"
+  depends=('t2-services-common' 'fprintd' 'libfprint' 'libinput' 'libudev' 'dbus' 'openrc')
+  backup=('etc/kait2en/t2-touchid.conf')
+  _service t2-touchid
+  install -Dm755 "$srcdir/kait2en-t2-touchid.initd" "$pkgdir/etc/init.d/kait2en-t2-touchid"
+  install -Dm755 "$srcdir/fprintd.initd" "$pkgdir/etc/init.d/fprintd"
+}
+
+package_t2-ave() {
+  pkgdesc="T2 AVE service t2remote (kait2en-t2-remote.service; needs t2bce_stack) (from KaiT2en)"
+  depends=('t2-services-common' 'kmod' 't2bce_stack-dkms' 'openrc')
+  _service t2-ave
+  install -Dm755 "$srcdir/kait2en-t2-remote.initd" "$pkgdir/etc/init.d/kait2en-t2-remote"
+}
+
+# The optional extras. Upstream's Makefile installs, minus systemctl/busctl calls and the old
+# "T2 Share" migration script. No KaiT2en logos are shipped (the apps fall back without them).
+package_t2-airshare() {
+  pkgdesc="Quick Share (Android Nearby Share) file transfer: GTK app, t2airshare daemon, hotspot helper (from KaiT2en)"
+  depends=('gtk4' 'libadwaita' 'glib2' 'networkmanager' 'dbus' 'openrc')
+  optdepends=('python-nautilus: "Send with T2 AirShare" in Nautilus')
+  license=('GPL-3.0-or-later AND Apache-2.0')
+  cd "$srcdir/kait2en/apps/t2-airshare"
+  local r="$srcdir/target/release"
+  install -Dm755 "$r/t2-airshare" "$r/t2airshare" -t "$pkgdir/usr/bin"
+  install -Dm755 "$r/t2-quickshare-hotspot" -t "$pkgdir/usr/libexec"
+  install -Dm755 "$srcdir/t2-airshare.user.initd" "$pkgdir/etc/user/init.d/t2-airshare"
+  install -Dm644 dbus/org.t2airshare.QuickShareHotspot.conf -t "$pkgdir/usr/share/dbus-1/system.d"
+  install -Dm644 dbus/org.t2airshare.QuickShareHotspot.service -t "$pkgdir/usr/share/dbus-1/system-services"
+  sed -i -e 's|^Exec=.*|Exec=/usr/libexec/t2-quickshare-hotspot|' -e '/^SystemdService=/d' \
+    "$pkgdir/usr/share/dbus-1/system-services/org.t2airshare.QuickShareHotspot.service"
+  install -Dm644 org.t2airshare.gtk.desktop integration/org.t2airshare.send.desktop -t "$pkgdir/usr/share/applications"
+  install -Dm644 assets/icons/hicolor/scalable/apps/org.t2airshare.gtk.svg -t "$pkgdir/usr/share/icons/hicolor/scalable/apps"
+  install -Dm755 integration/t2-airshare-send.servicemenu.desktop "$pkgdir/usr/share/kio/servicemenus/t2-airshare-send.desktop"
+  install -Dm644 integration/t2-airshare-send.nemo_action -t "$pkgdir/usr/share/nemo/actions"
+  install -Dm644 integration/t2-airshare-send.py -t "$pkgdir/usr/share/nautilus-python/extensions"
+  install -Dm644 THIRD-PARTY-NOTICES.md proto/LICENSE-Apache-2.0 proto/LICENSE-Chromium -t "$pkgdir/usr/share/licenses/$pkgname"
+  _licenses
+}
+
+package_t2-drop() {
+  pkgdesc="AirDrop over AWDL: t2drop daemon (needs AWDL-capable brcmfmac) (from KaiT2en)"
+  depends=('t2-services-common' 'networkmanager' 'dbus')
+  backup=('etc/NetworkManager/conf.d/90-t2-drop-awdl.conf')
+  cd "$srcdir/kait2en/apps/t2-drop"
+  install -Dm755 "$srcdir/target/release/t2drop" -t "$pkgdir/usr/bin"
+  install -Dm644 dbus/org.t2drop.conf -t "$pkgdir/usr/share/dbus-1/system.d"
+  install -Dm644 dbus/org.t2drop.service -t "$pkgdir/usr/share/dbus-1/system-services"
+  sed -i -e 's|^Exec=.*|Exec=/usr/bin/t2drop daemon|' -e '/^SystemdService=/d' \
+    "$pkgdir/usr/share/dbus-1/system-services/org.t2drop.service"
+  install -Dm644 networkmanager/90-t2-drop-awdl.conf -t "$pkgdir/etc/NetworkManager/conf.d"
+  _licenses
+}
+
+package_t2-debug() {
+  pkgdesc="T2 bridgeOS debug GTK app and t2debug CLI (from KaiT2en)"
+  depends=('gtk4' 'libadwaita' 'glib2' 't2bce_stack-dkms')
+  cd "$srcdir/kait2en/apps/t2-debug"
+  install -Dm755 "$srcdir/target/release/t2-debug" "$srcdir/target/release/t2debug" -t "$pkgdir/usr/bin"
+  install -Dm644 org.t2debug.gtk.desktop -t "$pkgdir/usr/share/applications"
+  install -Dm644 assets/icons/hicolor/scalable/apps/org.t2debug.gtk.svg -t "$pkgdir/usr/share/icons/hicolor/scalable/apps"
+  _licenses
+}
+
+package_t2-power-explorer() {
+  pkgdesc="GTK explorer for T2 Mac power states (from KaiT2en)"
+  depends=('gtk4' 'libadwaita' 'glib2' 'polkit' 'bash')
+  cd "$srcdir/kait2en/apps/t2-power-explorer"
+  install -Dm755 "$srcdir/target/release/t2-power-explorer" -t "$pkgdir/usr/bin"
+  install -Dm755 t2-power-explorer-status -t "$pkgdir/usr/libexec"
+  install -Dm644 org.t2powerexplorer.policy -t "$pkgdir/usr/share/polkit-1/actions"
+  install -Dm644 org.t2powerexplorer.gtk.desktop -t "$pkgdir/usr/share/applications"
+  install -Dm644 assets/icons/hicolor/scalable/apps/org.t2powerexplorer.gtk.svg -t "$pkgdir/usr/share/icons/hicolor/scalable/apps"
+  _licenses
+}

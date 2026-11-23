@@ -1,0 +1,10 @@
+#!/usr/bin/openrc-run
+
+# OpenRC user service in place of upstream's t2-airshare user unit (Restart=on-failure). The app's
+# "Visible to nearby devices" switch adds it to the user's default runlevel and starts it
+# (t2-airshare-openrc.patch), or stops it and takes it out.
+description="T2 AirShare receiver for Quick Share and AirDrop"
+
+supervisor=supervise-daemon
+command="/usr/bin/t2airshare"
+command_args="daemon"

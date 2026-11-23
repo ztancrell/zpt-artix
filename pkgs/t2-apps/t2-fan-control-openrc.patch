@@ -1,0 +1,59 @@
+diff --git a/apps/t2-fan-control/src/service.rs b/apps/t2-fan-control/src/service.rs
+index 20bf1fe..01d7545 100644
+--- a/apps/t2-fan-control/src/service.rs
++++ b/apps/t2-fan-control/src/service.rs
+@@ -2,13 +2,18 @@ use std::process::Command;
+ 
+ use crate::error::{FanControlError, Result};
+ 
+-const SERVICE_NAME: &str = "t2-fancontrol.service";
++const SERVICE_NAME: &str = "t2-fancontrol";
+ 
++// OpenRC: autostart means the service is in the default runlevel.
+ pub fn autostart_enabled() -> bool {
+-    Command::new("systemctl")
+-        .args(["is-enabled", "--quiet", SERVICE_NAME])
+-        .status()
+-        .map(|status| status.success())
++    Command::new("rc-update")
++        .args(["show", "default"])
++        .output()
++        .map(|output| {
++            String::from_utf8_lossy(&output.stdout)
++                .lines()
++                .any(|line| line.split_whitespace().next() == Some(SERVICE_NAME))
++        })
+         .unwrap_or(false)
+ }
+ 
+@@ -22,17 +27,17 @@ pub fn set_autostart(enabled: bool) -> Result<()> {
+ }
+ 
+ fn enable_service() -> Result<()> {
+-    run_systemctl(["enable", SERVICE_NAME])?;
++    run_rc_update(["add", SERVICE_NAME, "default"])?;
+     Ok(())
+ }
+ 
+ fn disable_service() -> Result<()> {
+-    run_systemctl(["disable", SERVICE_NAME])?;
++    run_rc_update(["del", SERVICE_NAME, "default"])?;
+     Ok(())
+ }
+ 
+-fn run_systemctl<const N: usize>(args: [&str; N]) -> Result<()> {
+-    let output = Command::new("systemctl")
++fn run_rc_update<const N: usize>(args: [&str; N]) -> Result<()> {
++    let output = Command::new("rc-update")
+         .args(args)
+         .output()
+         .map_err(FanControlError::ProcessSpawn)?;
+@@ -43,7 +48,7 @@ fn run_systemctl<const N: usize>(args: [&str; N]) -> Result<()> {
+ 
+     let stderr = String::from_utf8_lossy(&output.stderr).trim().to_owned();
+     Err(FanControlError::CommandFailed {
+-        command: format!("systemctl {}", args.join(" ")),
++        command: format!("rc-update {}", args.join(" ")),
+         stderr,
+     })
+ }

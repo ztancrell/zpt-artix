@@ -1,0 +1,25 @@
+#!/usr/bin/openrc-run
+
+# In place of upstream's kait2en-t2-touchid.service (Restart=on-failure, RestartSec=5). Its sandboxing
+# (ProtectSystem=strict and the like) has no OpenRC equivalent and is not carried.
+description="KaiT2en Touch ID bridge for fprintd"
+
+supervisor=supervise-daemon
+command="/usr/bin/t2-touchid"
+respawn_delay=5
+respawn_max=0
+output_log="/var/log/kait2en-t2-touchid.log"
+error_log="/var/log/kait2en-t2-touchid.log"
+
+depend() {
+	need dbus
+	want NetworkManager
+	after NetworkManager
+}
+
+start_pre() {
+	# The unit's EnvironmentFile and RuntimeDirectory (mode 0700, kept on stop).
+	. /etc/kait2en/t2-touchid.conf || return 1
+	command_args="--socket ${T2_TOUCHID_SOCKET} --uid ${T2_TOUCHID_UID} --flags ${T2_TOUCHID_FLAGS} --bind-user ${T2_TOUCHID_BIND_USER}"
+	checkpath -d -m 0700 -o root:root /run/t2-touchid
+}

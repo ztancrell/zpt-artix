@@ -1,0 +1,7 @@
+#!/bin/sh
+# elogind system-sleep hook (t2-services-common), in place of upstream's t2-services-suspend.service:
+# "pre" runs before sleep, "post" after resume. t2-ncm-sleep runs the hooks in
+# /usr/libexec/t2-services/sleep.d (t2-ave installs one) and never blocks sleep.
+case $1 in
+	pre|post) exec /usr/libexec/t2-services/t2-ncm-sleep "$1" ;;
+esac

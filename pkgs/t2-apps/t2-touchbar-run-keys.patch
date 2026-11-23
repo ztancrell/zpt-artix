@@ -1,0 +1,55 @@
+diff --git a/apps/t2-touchbar/src/keys.rs b/apps/t2-touchbar/src/keys.rs
+index 19fa13e..4702ba4 100644
+--- a/apps/t2-touchbar/src/keys.rs
++++ b/apps/t2-touchbar/src/keys.rs
+@@ -11,13 +11,14 @@
+ //!
+ //! [[key]]
+ //! label = "term"
+-//! run = "kgx"         # started through systemd-run
++//! run = "kgx"         # started with sh -c
+ //! ```
+ 
+ use std::{
+     env,
+     fs::{self, OpenOptions},
+     io::Write,
++    os::unix::process::CommandExt,
+     path::{Path, PathBuf},
+     process::Command,
+     thread,
+@@ -66,11 +67,13 @@ impl CustomKey {
+         }
+     }
+ 
+-    /// Starts the command outside the daemon's service, so it survives a
++    /// Starts the command in its own process group, so it survives a
+     /// restart of the Touch Bar.
+     pub fn run(command: &str) {
+-        let spawned = Command::new("systemd-run")
+-            .args(["--user", "--collect", "--quiet", "--", "sh", "-c", command])
++        // OpenRC: run it directly, in its own process group, without waiting for it.
++        let spawned = Command::new("sh")
++            .args(["-c", command])
++            .process_group(0)
+             .spawn();
+         match spawned {
+             Ok(mut child) => {
+@@ -98,7 +101,7 @@ pub fn path() -> PathBuf {
+ /// the user adds some.
+ const TEMPLATE: &str = r#"# Personal keys for the free space of the third Touch Bar row (swipe with
+ # two fingers to reach it). Up to four keys fit. Further entries are ignored.
+-# Restart after editing:  systemctl --user restart kait2en-touchbar
++# Restart after editing:  rc-service --user kait2en-touchbar restart
+ #
+ # Every key has a text label (1-12 characters) and exactly one action:
+ #   send = "<combination>"   modifiers ctrl, shift, alt (option), altgr, super
+@@ -107,7 +110,7 @@ const TEMPLATE: &str = r#"# Personal keys for the free space of the third Touch
+ #                            iso (extra key next to left shift), space, tab,
+ #                            enter, backspace, esc, left, right, up, down,
+ #                            home, end, pageup, pagedown, insert, delete, print
+-#   run = "<command>"        started through systemd-run --user
++#   run = "<command>"        started with sh -c
+ #
+ # The combination types whatever your keyboard layout puts there, so pick the
+ # one that produces the character on your layout. Examples for the German

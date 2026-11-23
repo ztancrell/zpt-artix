@@ -1,0 +1,18 @@
+# Replaces zpt-cachy's zpt-cachy-mac: same depends, minus t2-journal and t2-sidecar (not ported; see
+# README), plus Artix's linux and linux-headers, which the T2 DKMS modules build against.
+pkgname=zpt-artix-mac
+pkgver=1
+pkgrel=1
+pkgdesc="zpt-artix MacBookPro16,1: T2 drivers and services built from KaiT2en, with OpenRC scripts"
+arch=('any')
+url="https://github.com/ztancrell/zpt-artix"
+license=('MIT')
+install=zpt-artix-mac.install
+depends=('linux' 'linux-headers'
+         't2bce_stack-dkms' 't2smc-dkms' 't2bdrm-dkms' 't2touchbar-dkms' 'hid_t2magicmouse-dkms'
+         't2_precision_trackpad-dkms' 't2_trackpad_actuator-dkms' 't2mfi_fastcharge-dkms'
+         't2gmux-dkms' 't2thunderbolt-dkms' 't2smp-dkms' 't2sbs-dkms'
+         't2-dsp' 't2bce_audio-alsa-ucm-conf' 't2-services-common' 't2-power-tune'
+         't2-fan-control' 't2-smc-control' 't2-zone-power' 't2-force-click' 't2-kbd-backlight'
+         't2-touchbar' 't2-touchid' 't2-ave'
+         't2-airshare' 't2-drop' 't2-debug' 't2-power-explorer' 't2-blacklist')

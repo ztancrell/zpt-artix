@@ -1,0 +1,60 @@
+diff --git a/apps/t2-airshare/src/bin/t2-airshare/main.rs b/apps/t2-airshare/src/bin/t2-airshare/main.rs
+index bc7b571..4e36b3e 100644
+--- a/apps/t2-airshare/src/bin/t2-airshare/main.rs
++++ b/apps/t2-airshare/src/bin/t2-airshare/main.rs
+@@ -20,7 +20,7 @@ use gtk4 as gtk;
+ use t2_airshare::config::Config;
+ 
+ const APP_ID: &str = "org.t2airshare.gtk";
+-const SERVICE: &str = "t2-airshare.service";
++const SERVICE: &str = "t2-airshare";
+ 
+ fn main() -> glib::ExitCode {
+     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+@@ -46,8 +46,7 @@ fn build_ui(app: &adw::Application) {
+         .active(service_active())
+         .build();
+     visible.connect_active_notify(|row| {
+-        let verb = if row.is_active() { "enable" } else { "disable" };
+-        if let Err(err) = systemctl(&[verb, "--now", SERVICE]) {
++        if let Err(err) = set_visible(row.is_active()) {
+             eprintln!("{err}");
+             row.set_active(service_active());
+         }
+@@ -271,18 +270,31 @@ fn fill_trusted(list: &gtk::ListBox, config: &Rc<RefCell<Config>>) {
+ }
+ 
+ fn service_active() -> bool {
+-    Command::new("systemctl")
+-        .args(["--user", "is-active", "--quiet", SERVICE])
++    Command::new("rc-service")
++        .args(["--user", "--quiet", SERVICE, "status"])
+         .status()
+         .is_ok_and(|status| status.success())
+ }
+ 
+-fn systemctl(args: &[&str]) -> Result<(), String> {
+-    let output = Command::new("systemctl")
++// OpenRC user service: visible = in the user's default runlevel and started.
++// rc-update's exit status for an entry already there (or already gone) is not relied on.
++fn set_visible(visible: bool) -> Result<(), String> {
++    if visible {
++        let _ = openrc("rc-update", &["add", SERVICE, "default"]);
++        openrc("rc-service", &[SERVICE, "start"])
++    } else {
++        openrc("rc-service", &[SERVICE, "stop"])?;
++        let _ = openrc("rc-update", &["del", SERVICE, "default"]);
++        Ok(())
++    }
++}
++
++fn openrc(program: &str, args: &[&str]) -> Result<(), String> {
++    let output = Command::new(program)
+         .arg("--user")
+         .args(args)
+         .output()
+-        .map_err(|err| format!("systemctl: {err}"))?;
++        .map_err(|err| format!("{program}: {err}"))?;
+     if output.status.success() {
+         Ok(())
+     } else {

@@ -1,0 +1,29 @@
+#!/usr/bin/openrc-run
+
+# In place of upstream's fprintd.service drop-in (kait2en-t2-touchid.conf): fprintd with libfprint's
+# virtual storage device at the Touch ID bridge's socket, tied to the bridge (need: stopping
+# kait2en-t2-touchid stops this too, so PAM falls through to the password).
+# fprintd is otherwise started by D-Bus activation, without this variable. While this copy runs it
+# owns net.reactivated.Fprint, so D-Bus starts no second one (--no-timeout: it never exits when idle).
+# If an activated copy already holds the name (something asked for fprintd before this started),
+# this one can't get the name and exits; supervise-daemon tries again every 5 s, and the activated
+# copy exits by itself once idle (fprintd's default timeout), after which this one takes over.
+description="fprintd for the KaiT2en Touch ID bridge"
+
+supervisor=supervise-daemon
+command="/usr/lib/fprintd"
+command_args="--no-timeout"
+supervise_daemon_args="--env FP_VIRTUAL_DEVICE_STORAGE=/run/t2-touchid/fprint.sock"
+respawn_delay=5
+respawn_max=0
+output_log="/var/log/fprintd.log"
+error_log="/var/log/fprintd.log"
+
+depend() {
+	need dbus kait2en-t2-touchid
+}
+
+start_pre() {
+	# The drop-in's RuntimeDirectory, so the folder exists even if the bridge hasn't made it yet.
+	checkpath -d -m 0700 -o root:root /run/t2-touchid
+}

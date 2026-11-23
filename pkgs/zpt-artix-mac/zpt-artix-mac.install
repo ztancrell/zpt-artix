@@ -1,0 +1,20 @@
+# Lists the OpenRC services the T2 packages ship. None is added to a runlevel: pick what you use.
+post_install() {
+  cat <<'MSG'
+zpt-artix-mac: no T2 service is enabled. As root, add the ones you use to the default runlevel:
+  rc-update add t2-fancontrol default        # fan control (t2-fan-control)
+  rc-update add t2-smc-gaugingd default      # battery gauging mitigation (t2-smc-control)
+  rc-update add t2-zonepowerd default        # zone power budget (t2-zone-power)
+  rc-update add t2-force-click default       # trackpad force click (t2-force-click)
+  rc-update add t2-kbd-backlight default     # keyboard backlight idle timeout
+  rc-update add kait2en-t2-remote default    # T2 AVE (t2-ave)
+  rc-update add kait2en-t2-touchid default   # Touch ID bridge (t2-touchid), with:
+  rc-update add fprintd default              #   fprintd on the bridge's virtual device
+  rc-update add kait2en-touchbar-attach default  # Touch Bar display, only with the user service below
+As your user (Touch Bar daemon; first: groupadd --system kait2en-touchbar and
+usermod -aG kait2en-touchbar <user> as root, then log in again):
+  rc-update --user add kait2en-touchbar default
+T2 AirShare's "Visible to nearby devices" switch manages its user service, t2-airshare.
+See the README's T2 section.
+MSG
+}

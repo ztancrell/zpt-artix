@@ -1,0 +1,13 @@
+#!/bin/sh
+# elogind system-sleep hook (t2-touchbar): after resume, re-attach the Touch Bar display interface, as
+# upstream's udev rule does on systemd (it starts kait2en-touchbar-attach.service when the device comes
+# back in its firmware configuration). Only while the kait2en-touchbar-attach OpenRC service is started.
+# In the background, so resume doesn't wait for it; 5 tries, 5 s apart, 60 s each, like that service.
+[ "$1" = post ] || exit 0
+rc-service --quiet kait2en-touchbar-attach status || exit 0
+(
+	for try in 1 2 3 4 5; do
+		timeout 60 /usr/bin/kait2en-touchbar --attach && exit 0
+		sleep 5
+	done
+) >/dev/null 2>&1 &

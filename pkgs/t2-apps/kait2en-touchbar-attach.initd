@@ -1,0 +1,27 @@
+#!/usr/bin/openrc-run
+
+# In place of upstream's kait2en-touchbar-attach.service. On systemd the Touch Bar's udev rule starts it
+# (ENV{SYSTEMD_WANTS}), which does nothing on OpenRC: this runs at boot instead, and the elogind hook
+# /usr/lib/elogind/system-sleep/kait2en-touchbar re-attaches after resume while this is started.
+# The unit's ExecCondition (only when the kait2en-touchbar user service is enabled) has no OpenRC form:
+# add this to the default runlevel only when you use that user service, or the Touch Bar stays black.
+# Restart=on-failure (RestartSec=5) and TimeoutStartSec=60 become 5 tries, 5 s apart, 60 s each.
+description="Attach the Apple T2 Touch Bar display interface"
+
+depend() {
+	after udev
+}
+
+start() {
+	ebegin "Attaching the Touch Bar display interface"
+	local try=1
+	until timeout 60 /usr/bin/kait2en-touchbar --attach; do
+		if [ "$try" -ge 5 ]; then
+			eend 1
+			return 1
+		fi
+		try=$((try + 1))
+		sleep 5
+	done
+	eend 0
+}

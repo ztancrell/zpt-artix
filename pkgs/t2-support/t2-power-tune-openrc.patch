@@ -1,0 +1,148 @@
+diff --git a/apps/t2-power-tune/t2-power-tune-helper b/apps/t2-power-tune/t2-power-tune-helper
+index 1910e3d..9aa5f21 100755
+--- a/apps/t2-power-tune/t2-power-tune-helper
++++ b/apps/t2-power-tune/t2-power-tune-helper
+@@ -1,7 +1,7 @@
+ #!/usr/bin/env python3
+ import datetime, json, os, re, subprocess, sys, tempfile
+ 
+-SERVICE = "/etc/systemd/system/kait2en-power-tune.service"
++SERVICE = "/etc/init.d/kait2en-power-tune"
+ LEGACY_CONFIG = "/etc/t2-power-tune.json"
+ RUNTIME_DIR = "/run/t2-power-tune"
+ RUNTIME_STATE = f"{RUNTIME_DIR}/items.json"
+@@ -136,16 +136,18 @@ def load_service_items():
+         lines = open(SERVICE, encoding="utf-8").read().splitlines()
+     except OSError:
+         return []
++    # The OpenRC script persist() writes: one command per line in start() and stop().
++    section = None
+     for line in lines:
+-        start = line.startswith("ExecStart=")
+-        stop = line.startswith("ExecStop=")
+-        if not start and not stop: continue
+-        target = starts if start else stops
++        if line in ("start() {", "stop() {"): section = line[:-4]; continue
++        if line == "}": section = None; continue
++        if section is None: continue
++        target = starts if section == "start" else stops
+         match = re.search(r"setpci -s (0000:[0-9a-f]{2}:[0-9a-f]{2}\.[0-7]) CAP_EXP\+10\.w=([0-3]):0003", line)
+         if match:
+             target[("aspm", match.group(1))] = match.group(2)
+             continue
+-        match = re.search(r"printf '%%s\\n' '([^']+)' > '([^']+)'", line)
++        match = re.search(r"printf '%s\\n' '([^']+)' > '([^']+)'", line)
+         if match:
+             target[("tunable", match.group(2))] = match.group(1)
+             continue
+@@ -313,8 +315,7 @@ def command(item, start):
+     kind, ident, original, target, _enabled = item; value = target if start else original
+     if kind == "aspm": return f"/usr/bin/setpci -s {ident} CAP_EXP+10.w={int(value):x}:0003"
+     if kind == "ltr": return f"/usr/local/libexec/t2-power-tune-helper ltr-set '{ident}' {value}"
+-    # systemd expands percent specifiers even inside ExecStart shell strings.
+-    return f"/usr/bin/printf '%%s\\n' '{value}' > '{ident}'"
++    return f"/usr/bin/printf '%s\\n' '{value}' > '{ident}'"
+ 
+ def apply(items):
+     errors=[]; changed=[]
+@@ -370,28 +371,28 @@ def apply(items):
+ def persist(items):
+     selected=[item for item in items if item[4]]
+     if not selected:
+-        run("systemctl","disable","--now","kait2en-power-tune.service")
+-        if os.path.exists(SERVICE): os.unlink(SERVICE)
++        if os.path.exists(SERVICE):
++            run("rc-service","kait2en-power-tune","stop")
++            run("rc-update","del","kait2en-power-tune","default")
++            os.unlink(SERVICE)
+         if os.path.exists(LEGACY_CONFIG): os.unlink(LEGACY_CONFIG)
+-        run("systemctl","daemon-reload")
+         save_runtime_items(items)
+         return
+-    lines=["[Unit]","Description=KaiT2en power tuning","After=multi-user.target"]
+-    if any(item[0]=="ltr" for item in selected):
+-        lines += ["RequiresMountsFor=/sys/kernel/debug","After=sys-kernel-debug.mount"]
+-    lines += ["","[Service]","Type=oneshot","RemainAfterExit=yes"]
+-    lines += [f'ExecStart=/bin/sh -c "{command(x,True)}"' for x in selected]
+-    lines += [f'ExecStop=/bin/sh -c "{command(x,False)}"' for x in reversed(selected)]
+-    lines += ["","[Install]","WantedBy=multi-user.target",""]
+-    fd,tmp=tempfile.mkstemp(prefix=".kait2en-power-tune.",dir="/etc/systemd/system",text=True)
++    # OpenRC: a start-only script in the default runlevel; stop() restores the original values.
++    lines=["#!/usr/bin/openrc-run","# Written by t2-power-tune.","description=\"KaiT2en power tuning\"",""]
++    # OpenRC's sysfs service mounts /sys/kernel/debug, which the LTR settings need.
++    lines += ["depend() {","\tneed sysfs","}",""]
++    lines += ["start() {"] + [f'/bin/sh -c "{command(x,True)}"' for x in selected] + ["}",""]
++    lines += ["stop() {"] + [f'/bin/sh -c "{command(x,False)}"' for x in reversed(selected)] + ["}",""]
++    fd,tmp=tempfile.mkstemp(prefix=".kait2en-power-tune.",dir="/etc/init.d",text=True)
+     try:
+         with os.fdopen(fd,"w",encoding="utf-8") as output: output.write("\n".join(lines))
+-        os.chmod(tmp,0o644); os.replace(tmp,SERVICE)
++        os.chmod(tmp,0o755); os.replace(tmp,SERVICE)
+     finally:
+         if os.path.exists(tmp): os.unlink(tmp)
+     if os.path.exists(LEGACY_CONFIG): os.unlink(LEGACY_CONFIG)
+-    for args in (("daemon-reload",),("enable","kait2en-power-tune.service")):
+-        result=run("systemctl",*args)
++    if not os.path.exists("/etc/runlevels/default/kait2en-power-tune"):
++        result=run("rc-update","add","kait2en-power-tune","default")
+         if result.returncode: fail(result.stderr.strip())
+     save_runtime_items(items)
+ 
+diff --git a/apps/t2-power-tune/t2-power-tune.py b/apps/t2-power-tune/t2-power-tune.py
+index b6fe942..97f30e2 100755
+--- a/apps/t2-power-tune/t2-power-tune.py
++++ b/apps/t2-power-tune/t2-power-tune.py
+@@ -8,7 +8,7 @@ APP_ID="org.t2powertune.gtk"
+ APP_VERSION="0.02"
+ HELPER="/usr/local/libexec/t2-power-tune-helper"
+ STATUS="/usr/local/libexec/t2-power-tune-status"
+-SERVICE="/etc/systemd/system/kait2en-power-tune.service"
++SERVICE="/etc/init.d/kait2en-power-tune"
+ 
+ def kait2en_brand():
+     # White type for dark surfaces, dark type for light ones. Without the
+@@ -27,7 +27,7 @@ def kait2en_brand():
+ 
+ SECTION_HELP={
+     "PCIe ASPM candidates":("PCIe ASPM link states",
+-        "L0s and L1 reduce the power used by an idle PCIe link. The states are selected independently and are only written after Apply.\n\nThe numerically highest or most complete combination is not always the best one. Hardware and drivers may behave better with L1 alone. On some platforms L0s can even prevent deeper package C-states. Test each link and keep only combinations that remain stable across suspend and resume before writing to systemd."),
++        "L0s and L1 reduce the power used by an idle PCIe link. The states are selected independently and are only written after Apply.\n\nThe numerically highest or most complete combination is not always the best one. Hardware and drivers may behave better with L1 alone. On some platforms L0s can even prevent deeper package C-states. Test each link and keep only combinations that remain stable across suspend and resume before writing to the OpenRC service."),
+     "LTR requirements":("Latency Tolerance Reporting",
+         "LTR tells the platform how long a device can tolerate delayed service. A strict requirement can keep the package in a shallower C-state.\n\nIgnore does not rewrite the device's Snoop or No-snoop latency. It only tells the PMC not to use that source as a constraint. This can improve residency, but may cause timeouts, audio dropouts or unstable I/O. Apply one source at a time and verify the device afterwards."),
+     "Runtime power management":("Runtime power management",
+@@ -49,7 +49,7 @@ CSTATE_HELP={
+ }
+ 
+ ACTION_HELP=("Actions",
+-    "Apply selected changes writes the currently chosen values for this boot and verifies them. Nothing is written merely by changing a checkbox.\n\nCreate or Update systemd service stores the same selection in kait2en-power-tune.service so it is restored at boot. Unselected managed values are removed from the service.\n\nRescan reads the current hardware state again. It does not apply settings, but hardware values such as LTR can change dynamically while devices are active.")
++    "Apply selected changes writes the currently chosen values for this boot and verifies them. Nothing is written merely by changing a checkbox.\n\nCreate or Update OpenRC service stores the same selection in /etc/init.d/kait2en-power-tune so it is restored at boot. Unselected managed values are removed from the service.\n\nRescan reads the current hardware state again. It does not apply settings, but hardware values such as LTR can change dynamically while devices are active.")
+ 
+ def palette_css(dark):
+     if dark: window,fg,panel,line,rim,hairline="#151517","#e8e8e8","#0d0d0f","rgba(255,255,255,0.13)","rgba(255,255,255,0.24)","rgba(255,255,255,0.06)"
+@@ -148,7 +148,7 @@ class PowerTune(Adw.Application):
+         if message:self.notice.set_text(message)
+     def update_service_button(self):
+         action="Update" if os.path.isfile(SERVICE) else "Create"
+-        self.service_btn.set_label(f"{action} systemd service")
++        self.service_btn.set_label(f"{action} OpenRC service")
+     def scan(self): self.busy(True,"Scanning hardware…"); threading.Thread(target=self._scan,daemon=True).start()
+     def _scan(self):
+         result=subprocess.run(["pkexec","--disable-internal-agent",HELPER,"scan"],text=True,capture_output=True)
+@@ -229,7 +229,7 @@ class PowerTune(Adw.Application):
+     def start_action(self,action):
+         self.service_existed=os.path.isfile(SERVICE)
+         service_action="Updating" if self.service_existed else "Creating"
+-        self.busy(True,"Applying changes…" if action=="apply" else f"{service_action} systemd service…")
++        self.busy(True,"Applying changes…" if action=="apply" else f"{service_action} OpenRC service…")
+         threading.Thread(target=self._action,args=(action,json.dumps(self.payload())),daemon=True).start()
+     def _action(self,action,payload):
+         result=subprocess.run(["pkexec","--disable-internal-agent",HELPER,action],input=payload,text=True,capture_output=True)
+@@ -245,7 +245,7 @@ class PowerTune(Adw.Application):
+             if changes:GLib.timeout_add_seconds(2,self.rescan_after_apply)
+         elif any(item["enabled"] for item in self.payload()):
+             verb="updated" if self.service_existed else "created"
+-            self.notice.set_text(f"kait2en-power-tune.service was {verb} and enabled.")
++            self.notice.set_text(f"/etc/init.d/kait2en-power-tune was {verb} and added to the default runlevel.")
+         else:self.notice.set_text("The empty service configuration was removed.")
+         if action=="persist" and not code:self.update_service_button()
+         return False

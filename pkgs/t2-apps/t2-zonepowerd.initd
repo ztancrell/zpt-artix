@@ -1,0 +1,13 @@
+#!/usr/bin/openrc-run
+
+# In place of upstream's t2-zonepowerd.service (Restart=always, RestartSec=2).
+description="T2 Zone Power daemon"
+
+supervisor=supervise-daemon
+command="/usr/bin/t2-zonepower-gtk"
+command_args="--daemon"
+respawn_delay=2
+respawn_max=0
+# Keep the daemon's output, so a failed start or respawn says why.
+output_log="/var/log/t2-zonepowerd.log"
+error_log="/var/log/t2-zonepowerd.log"
