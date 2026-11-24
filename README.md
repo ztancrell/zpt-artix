@@ -145,7 +145,7 @@ on 2026-11-23). See `DESIGN.md` for the idea and decisions.
     `wallpapers/` (pinned to a commit like the X stack). Homestead is the default look for every
     user; a user's own files in `~/.config` override it:
     - `homestead-theme`: the Homestead GTK 3/4 and Openbox theme (`/usr/share/themes/Homestead`),
-      the `Homestead` icon theme (Breeze Dark) and `Homestead-Cursor` (the `KDE-classic` cursors, then
+      the `Homestead` icon theme (Papirus-Dark) and `Homestead-Cursor` (the `KDE-classic` cursors, then
       Neutral), all in `/usr/share/icons`; GTK settings in `/etc/gtk-3.0` and `/etc/gtk-4.0`; and the
       defaults in `/etc/xdg`: `openbox/` (rc.xml, menu.xml, autostart, environment), `tint2/tint2rc`,
       `kitty/` (kitty.conf, homestead.conf), `obmenu-generator/` (config.pl, schema.pl) and
@@ -186,7 +186,7 @@ on 2026-11-23). See `DESIGN.md` for the idea and decisions.
       icons and Sans Serif 11, and the `Homestead` scheme in `/usr/share/color-schemes` (KDE apps read
       the colours from kdeglobals itself, so they are repeated there). An Artix ISO install copies a
       `~/.config/kdeglobals` (Artix-dark) from `/etc/skel` that overrides it; move it away to get
-      Homestead's. Depends on dex, breeze-icons, ttf-dejavu, xcursor-neutral, and
+      Homestead's. Depends on dex, papirus-icon-theme, ttf-dejavu, xcursor-neutral, and
       xed, playerctl and mpv-mpris, which pulls mpv (key bindings), brightnessctl and libnotify
       (homestead-osd); zenity (tint2 clock) and geany (menu's config editor) are
       optional. The `firefox-nightly` key binding has no Artix package (Superseded: `firefox-nightly-bin`
