@@ -1,7 +1,7 @@
 # Based on the AUR xlibre-input-libinput PKGBUILD; built from homestead's fork.
 pkgname=xlibre-input-libinput-homestead
-_commit=f9a5c264dcaba096e40c0b1e9cdd67278a67cd7c
-pkgver=25.0.2rc2.r393.gf9a5c26
+_commit=fd2338a93bf361e9aa5a62e450656aff40d03603
+pkgver=25.0.2rc2.r394.gfd2338a
 pkgrel=1
 pkgdesc="libinput input driver for the XLibre X server (homestead fork)"
 arch=('x86_64')
