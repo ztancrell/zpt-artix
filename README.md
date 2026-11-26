@@ -444,7 +444,9 @@ means the daemon process is running). The boot check stays manual:
 ## CI
 
 `.github/workflows/repo.yml` runs on every push to `master`, weekly (Monday 04:17 UTC) and by hand
-(Actions tab, "Run workflow", or `gh workflow run repo`). In a fresh
+(Actions tab, "Run workflow", or `gh workflow run repo`). It has two jobs, so the package builds
+(third-party code, run as a build user with passwordless sudo) never share a machine with the
+signing key or a write-capable token. Job `build` has a read-only token and no secrets; in a fresh
 `docker.io/artixlinux/artixlinux:base-devel` container it:
 
 1. builds every package with `build.sh` as a non-root build user, with
@@ -457,7 +459,13 @@ means the daemon process is running). The boot check stays manual:
 2. runs `mirror-cachyos.sh` (it fails the run unless every CachyOS signature verifies), then deletes
    CachyOS's `.sig` files;
 3. runs `namcap` on every package: report only, in the run's summary page (namcap's errors include
-   false positives, so they don't fail the run);
+   false positives, so they don't fail the run), then uploads the package files as the workflow
+   artifact `packages` (kept one day).
+
+Job `sign` runs after it on a fresh runner, in a `docker.io/artixlinux/artixlinux:base` container
+that installs only `gnupg`, `pacman` (`repo-add`) and `github-cli` and never runs build code. It is
+the only job with the signing secrets and the `contents: write` token. It downloads `packages`, then:
+
 4. signs every package and the db with the zpt-artix key (private key in the `GPG_PRIVATE_KEY`
    secret, its passphrase in `GPG_PASSPHRASE`); `repo-add --verify` checks every package signature;
 5. only if all of that passed: updates the rolling release [`repo`](https://github.com/ztancrell/zpt-artix/releases/tag/repo)
@@ -466,13 +474,18 @@ means the daemon process is running). The boot check stays manual:
    Scheduled runs stop before this step: they never publish.
 
 `.github/workflows/nightly.yml` runs daily (11:43 UTC) and by hand (`gh workflow run nightly`). It
-rebuilds only `firefox-nightly-bin`, so plain `sudo pacman -Syu` gets Mozilla's current Nightly. In
-the same container it reads the Nightly's version from Mozilla and stops if the release already has
-that package; else it builds it with `build.sh`, downloads the published `zpt-artix.db`/`.files`,
+rebuilds only `firefox-nightly-bin`, so plain `sudo pacman -Syu` gets Mozilla's current Nightly. It
+has the same two jobs. Job `build` reads the Nightly's version from Mozilla and stops if the release
+already has that package; else it builds it with `build.sh` and uploads it as `packages`. Job `sign`
+(skipped when there is no new Nightly) downloads it and the published `zpt-artix.db`/`.files`,
 signs the package and db as above (`repo-add --verify` checks the published db's signature first),
 and on `master` uploads the package, then the db, then deletes the old `firefox-nightly-bin`
 assets. It shares `repo.yml`'s concurrency group, so the two never write the release at once; a
 run that starts while another waits cancels the waiting one.
+
+Superseded (2026-11-26): both workflows used to build, sign and publish in one job and one
+container, so a package build could reach the signing key and the release token. The current
+`build` and `sign` jobs are in `.github/workflows/repo.yml` and `nightly.yml`.
 
 Results: <https://github.com/ztancrell/zpt-artix/actions>. Signing key `zpt-artix.asc`, fingerprint
 `473D2CE689E0FE660D43FD715566DC3F8C6B2B75`.

@@ -1,6 +1,10 @@
 # Build every package in a clean Artix container, mirror CachyOS's EAC packages, check and sign
 # everything with the zpt-artix key, and publish the signed pacman repo as the assets of the
 # rolling release "repo". See README "CI".
+# Two jobs: package builds run third-party code as builder with NOPASSWD sudo, so a build could leave a root
+# process behind that reads later steps' secrets or swaps gpg/repo-add. Job build therefore gets a read-only
+# token and no secrets, and hands only the package files on as an artifact; job sign, on a fresh runner that
+# never runs build code, alone holds the signing key and the write token.
 name: repo
 on:
   push:
@@ -8,8 +12,7 @@ on:
   schedule:
     - cron: '17 4 * * 1'  # weekly: catches Artix updates breaking the builds
   workflow_dispatch:
-permissions:
-  contents: write
+permissions: {}  # each job sets its own; nothing here grants write
 concurrency:
   group: repo
 defaults:
@@ -22,6 +25,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 150
     container: docker.io/artixlinux/artixlinux:base-devel
+    permissions:
+      contents: read  # runs package build code: no secrets, no write token
     steps:
       - name: Set up container
         run: |
@@ -55,6 +60,30 @@ jobs:
           for f in repo/*.pkg.tar.zst; do namcap "$f"; done | tee namcap.txt
           { echo "## namcap: $(grep -c ' E: ' namcap.txt) errors, $(grep -c ' W: ' namcap.txt) warnings"
             echo '```'; cat namcap.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      # Only the package files go on: the db is rebuilt and signed in job sign, and its zpt-artix.db/.files
+      # symlinks would not survive the artifact anyway.
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: packages
+          path: repo/*.pkg.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0  # already zstd
+  sign:
+    # A fresh runner and container that never runs package build code: the only job with the secrets.
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container: docker.io/artixlinux/artixlinux:base
+    permissions:
+      contents: write  # publish the release
+    steps:
+      - name: Set up container
+        run: pacman -Syu --noconfirm --needed gnupg pacman github-cli  # gpg, repo-add, gh
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: packages
+          path: repo
       - name: Sign packages and db
         env:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
