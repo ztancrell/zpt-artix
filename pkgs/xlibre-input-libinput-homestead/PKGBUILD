@@ -1,7 +1,7 @@
 # Based on the AUR xlibre-input-libinput PKGBUILD; built from homestead's fork.
 pkgname=xlibre-input-libinput-homestead
-_commit=7fb6bd7a6945fb69820a2b307f6eae413f0114c9
-pkgver=25.0.1.r377.g7fb6bd7
+_commit=f9a5c264dcaba096e40c0b1e9cdd67278a67cd7c
+pkgver=25.0.2rc2.r393.gf9a5c26
 pkgrel=1
 pkgdesc="libinput input driver for the XLibre X server (homestead fork)"
 arch=('x86_64')
@@ -17,7 +17,7 @@ sha256sums=('SKIP')
 
 pkgver() {
   cd xf86-input-libinput
-  printf "%s.r%s.g%s" "25.0.1" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+  printf "%s.r%s.g%s" "25.0.2rc2" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
 }
 
 build() {

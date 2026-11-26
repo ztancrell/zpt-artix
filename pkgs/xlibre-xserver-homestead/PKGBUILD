@@ -3,8 +3,8 @@
 # Artix: no systemd. libudev (Artix's, no libsystemd) replaces systemd-libs; systemd-logind support
 # talks to elogind over D-Bus, as in Artix's own xlibre-xserver (-D systemd_logind=true).
 pkgname=xlibre-xserver-homestead
-_commit=8f3283b21adc5d399a515dbed3e5f7b956106d82
-pkgver=25.2.0.r24111.g8f3283b
+_commit=8bc14641fee7cf24ea50b6d36faff814a16472ea
+pkgver=25.2.0.r24142.g8bc1464
 pkgrel=1
 pkgdesc="XLibre X server (homestead fork), incl. common files and SDK"
 arch=('x86_64')
