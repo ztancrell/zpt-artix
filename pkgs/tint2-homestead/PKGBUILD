@@ -1,8 +1,8 @@
 # Based on Arch's tint2 PKGBUILD; built from homestead's fork, cmake flags as homestead builds it (no tint2conf).
 # /etc/xdg/tint2/tint2rc comes from homestead-theme instead.
 pkgname=tint2-homestead
-_commit=f2a46c104dc842fa3348f3ba512c7aff8e8f6a3e
-pkgver=17.0.2.r16.gf2a46c1
+_commit=4bc374b6ba20cddb7777e2a33ffa9a21d282db08
+pkgver=17.0.2.r17.g4bc374b
 pkgrel=1
 pkgdesc="Panel/taskbar for X11 window managers (homestead fork)"
 arch=('x86_64')

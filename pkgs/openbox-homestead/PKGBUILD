@@ -1,8 +1,8 @@
 # Based on Arch's openbox PKGBUILD; built from homestead's fork (openbox-patchwork), --enable-debug as homestead builds it.
 # /etc/xdg/openbox (rc.xml, menu.xml, autostart, environment) comes from homestead-theme instead.
 pkgname=openbox-homestead
-_commit=15b53a930feddef5f810434d92306d07ed325714
-pkgver=3.6.0.r7672.g15b53a9
+_commit=54dc407bab53f430d0d42a619b69d1c7859ac7d9
+pkgver=3.6.0.r7673.g54dc407
 pkgrel=1
 pkgdesc="Openbox window manager (homestead fork, openbox-patchwork)"
 arch=('x86_64')
