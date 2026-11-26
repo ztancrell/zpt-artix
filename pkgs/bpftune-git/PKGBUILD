@@ -1,8 +1,12 @@
 # Reference: AUR bpftune-git as of 2026-11-20 (pkgver r598.688b122-1; not in Arch's repos; unchanged).
-# Builds the newest commit of oracle-samples/bpftune, so pkgver changes with each build. It installs a
-# systemd unit, unused on OpenRC; bpftune-openrc (this repo) has the OpenRC service.
+# Builds the pinned _commit of oracle-samples/bpftune, never the moving HEAD: an unreviewed upstream
+# commit would run in the CI build job and could change any package before signing. To update, review
+# the upstream diff, then bump _commit and pkgver. It installs a systemd unit, unused on OpenRC;
+# bpftune-openrc (this repo) has the OpenRC service.
+# Superseded (2026-11-26): built the newest upstream commit, so pkgver changed with each build.
 # Maintainer: Kirill Fries-Raevskiy <exocarnivore@gmail.com>
 _pkgbase="bpftune"
+_commit=d5d9f609ebe79df5e5788289c4ab51211f57bbef
 pkgname="$_pkgbase-git"
 pkgver=r772.d5d9f60
 pkgrel=1
@@ -19,7 +23,7 @@ conflicts=("$_pkgbase")
 #backup=()
 options=('strip')
 #install=
-source=('git+https://github.com/oracle-samples/bpftune')
+source=("git+https://github.com/oracle-samples/bpftune#commit=${_commit}")
 #noextract=()
 md5sums=('SKIP')
 

@@ -341,8 +341,9 @@ on 2026-11-23). See `DESIGN.md` for the idea and decisions.
   - Apps and libraries in no Arch or Artix repo, built from the AUR's PKGBUILD (named in each
     one's first line), unchanged: `vkbasalt` 0.3.2.10, `simple-mtpfs` 0.4.0,
     `jmtpfs` 0.5, `amdtop` 0.2.6, `python311` 3.11.18, `libpng12` 1.2.59, `ocs-url` 3.1.0, and
-    `bpftune-git`, which builds upstream's newest commit (its version changes with each build; it
-    installs a systemd unit, unused on OpenRC). Superseded: `parole-git` was built here until
+    `bpftune-git`, pinned to a reviewed upstream commit (`_commit`) so no unreviewed commit runs in
+    CI (it installs a systemd unit, unused on OpenRC; superseded: it built upstream's newest commit
+    until 2026-11-26). Superseded: `parole-git` was built here until
     `zpt-artix-apps` 1-7 swapped it for mpv; the package is gone from the repo.
   - `zpt-artix-apps`: meta-package for everyday apps: `firefox-nightly-bin`, thunderbird, `obsidian-bin`,
     qbittorrent, mpv, steam, lutris, `heroic-games-launcher-bin`, mangohud, gamemode,
@@ -353,12 +354,12 @@ on 2026-11-23). See `DESIGN.md` for the idea and decisions.
     nano-syntax-highlighting, lib32-mangohud, umu-launcher, antimicrox, openrgb (Arch
     `[extra]`/`[multilib]` only), the AUR's
     `electron-cash-git` and `arch-update` (they need Arch `[extra]` packages; `arch-update` also
-    depends on `systemd`), `bpftune-openrc`, and four AUR packages this repo doesn't build:
+    depends on `systemd`), `bpftune-openrc`, and three AUR packages this repo doesn't build:
     `lib32-vkbasalt` (its build deps are in `[lib32]`, which the build container doesn't enable),
-    `reshade-shaders-git` (its build downloads 45 third-party shader packs from unpinned branch
-    zips, with no checksums and licences that weren't reviewed), `virtio-win` (an 877 MB ISO) and
+    `virtio-win` (an 877 MB ISO) and
     `synergy3-bin` (proprietary; its build fetches Symless's package with a download token). Install
-    those from the AUR with an AUR helper. `steam` and `lib32-vkd3d` are in
+    those from the AUR with an AUR helper. Superseded: `reshade-shaders-git` was suggested here until
+    `zpt-artix-apps` 1-8 dropped it (the owner no longer uses ReShade). `steam` and `lib32-vkd3d` are in
     Artix's `[lib32]` repo, which Artix's default `pacman.conf` leaves off: enable it first. No
     browser since 1-3: Firefox Nightly has no Artix package, so it is Mozilla's tarball
     (`https://download.mozilla.org/?product=firefox-nightly-latest-ssl&os=linux64&lang=en-US`)

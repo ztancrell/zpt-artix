@@ -9,7 +9,7 @@
 # resolve: Arch [extra]/[multilib] packages, and AUR apps this repo doesn't build (see README).
 pkgname=zpt-artix-apps
 pkgver=1
-pkgrel=7
+pkgrel=8
 pkgdesc="zpt-artix everyday apps: browser, mail, notes, torrents, music, gaming, dev tools"
 arch=('any')
 url="https://github.com/ztancrell/zpt-artix"
@@ -33,6 +33,5 @@ optdepends=('ghidra: reverse engineering (needs Arch [extra]; see README)'
             'arch-update: update notifier, AUR (needs Arch [extra]; see README)'
             'bpftune-openrc: OpenRC service for bpftune'
             'lib32-vkbasalt: vkbasalt for 32-bit games, AUR (not built here; see README)'
-            'reshade-shaders-git: ReShade shaders for vkbasalt, AUR (not built here; see README)'
             'virtio-win: Windows VirtIO drivers ISO, AUR (not built here; see README)'
             'synergy3-bin: keyboard and mouse sharing, AUR (not built here; see README)')
