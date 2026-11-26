@@ -3,7 +3,7 @@
 # wmctrl, obmenu-generator, dex, xcursor-neutral, homestead-theme and homestead-wallpapers are in no Artix repo; they come from this repo.
 pkgname=zpt-artix-desktop
 pkgver=1
-pkgrel=6
+pkgrel=7
 pkgdesc="zpt-artix desktop: the homestead X11 stack, ly login, session tools, Thunar, PipeWire, NetworkManager, Bluetooth"
 arch=('any')
 url="https://github.com/ztancrell/zpt-artix"
@@ -13,7 +13,7 @@ depends=('xlibre-xserver-homestead' 'xlibre-input-libinput-homestead'
          'xorg-xinit' 'xorg-xrandr' 'xorg-xset' 'xorg-xkill' 'xclip' 'xdotool' 'wmctrl'
          'ly' 'ly-openrc'
          'obmenu-generator' 'dex' 'dunst' 'feh' 'polkit-gnome' 'lxappearance-obconf' 'xdg-user-dirs-gtk'
-         'xdg-desktop-portal-gtk' 'slock' 'redshift' 'flameshot' 'scrot'
+         'xdg-desktop-portal-gtk' 'slock' 'xss-lock' 'i3lock' 'redshift' 'flameshot' 'scrot'
          'thunar' 'thunar-archive-plugin' 'thunar-media-tags-plugin' 'thunar-volman' 'tumbler'
          'ffmpegthumbnailer' 'gvfs' 'gvfs-mtp' 'gvfs-smb' 'xarchiver' 'unzip' 'unrar'
          'pipewire' 'pipewire-pulse' 'pipewire-alsa' 'wireplumber'

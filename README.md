@@ -169,7 +169,9 @@ on 2026-11-23). See `DESIGN.md` for the idea and decisions.
       `/etc/xdg/openbox/environment` (with `XCURSOR_SIZE` 24 unless already set) and the GTK settings. Override rules: `~/.config/openbox/rc.xml`
       and `menu.xml` replace the system ones, but `~/.config/openbox/autostart` runs after the system
       autostart, not instead of it; the autostart starts tint2 with `$HOMESTEAD_TINT2RC` if set, else
-      `/etc/xdg/tint2/tint2rc`, and on
+      `/etc/xdg/tint2/tint2rc`, starts `xss-lock --transfer-sleep-lock -- i3lock -n -c 0d0d0d` (the
+      screen locks before every suspend, on `loginctl lock-session` and when the X screensaver starts,
+      after 10 idle minutes by X's default), and on
       first login copies `/etc/xdg/obmenu-generator` to `~/.config/obmenu-generator` (obmenu-generator
       reads only that and would otherwise write xterm defaults); `~/.config/gtk-3.0/settings.ini` (Plasma
       writes one) overrides the GTK settings. After tint2 the autostart runs `dex -a -e Openbox`, which
@@ -273,8 +275,8 @@ on 2026-11-23). See `DESIGN.md` for the idea and decisions.
     It depends on the homestead X stack,
     xinit/xrandr/xset/xkill, xclip, xdotool, wmctrl, `ly` + `ly-openrc`, session tools (obmenu-generator,
     dex, dunst, feh,
-    polkit-gnome, lxappearance-obconf, xdg-user-dirs-gtk, xdg-desktop-portal-gtk, slock, redshift,
-    flameshot, scrot), Thunar with its plugins, tumbler, gvfs and archivers, PipeWire with
+    polkit-gnome, lxappearance-obconf, xdg-user-dirs-gtk, xdg-desktop-portal-gtk, slock, xss-lock and
+    i3lock (the autostart's screen lock), redshift, flameshot, scrot), Thunar with its plugins, tumbler, gvfs and archivers, PipeWire with
     `pipewire-openrc`/`pipewire-pulse-openrc`/`wireplumber-openrc`, pavucontrol, pasystray,
     alsa-utils (amixer, for the volume keys),
     `networkmanager-openrc`, network-manager-applet, nss-mdns, `bluez-openrc`, blueman, kitty,
