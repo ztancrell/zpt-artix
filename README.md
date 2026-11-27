@@ -276,7 +276,7 @@ on 2026-11-23). See `DESIGN.md` for the idea and decisions.
     xinit/xrandr/xset/xkill, xclip, xdotool, wmctrl, `ly` + `ly-openrc`, session tools (obmenu-generator,
     dex, dunst, feh,
     polkit-gnome, lxappearance-obconf, xdg-user-dirs-gtk, xdg-desktop-portal-gtk, slock, xss-lock and
-    i3lock (the autostart's screen lock), redshift, flameshot, scrot), Thunar with its plugins, tumbler, gvfs and archivers, PipeWire with
+    i3lock (the autostart's screen lock), redshift, scrot (the screenshot keys)), Thunar with its plugins, tumbler, gvfs and archivers, PipeWire with
     `pipewire-openrc`/`pipewire-pulse-openrc`/`wireplumber-openrc`, pavucontrol, pasystray,
     alsa-utils (amixer, for the volume keys),
     `networkmanager-openrc`, network-manager-applet, nss-mdns, `bluez-openrc`, blueman, kitty,
