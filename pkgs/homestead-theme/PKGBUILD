@@ -7,8 +7,8 @@
 # six of the eight sounds are sound-theme-freedesktop's files (see its CREDITS), desktop-login.oga and
 # device-added.oga are of unknown origin.
 pkgname=homestead-theme
-_commit=dd2e2c9ef6b2da814deb9250e6e22f9f64f885a9
-pkgver=r40.gdd2e2c9
+_commit=2dfc855339420af9330e0ce6d1862c38d8d8ad39
+pkgver=r41.g2dfc855
 pkgrel=1
 pkgdesc="Homestead desktop theme and default Openbox, tint2, kitty, obmenu-generator, GTK, dunst and KDE settings"
 arch=('any')
@@ -17,9 +17,10 @@ license=('LicenseRef-unknown')
 # dex: the autostart runs the XDG autostart entries (tray applets) with it. papirus-icon-theme: the
 # Homestead icon theme inherits Papirus-Dark. xed, playerctl (media keys),
 # mpv-mpris (pulls mpv; W-m opens mpv, and the plugin lets playerctl control it), brightnessctl and
-# libnotify (notify-send, for homestead-osd): rc.xml key bindings; the rest of what autostart and rc.xml run
+# libnotify (notify-send, for homestead-osd and homestead-shot), scrot, xclip and xdg-user-dirs (homestead-shot,
+# the screenshot keys): rc.xml key bindings; the rest of what autostart and rc.xml run
 # comes with zpt-artix-desktop.
-depends=('dex' 'papirus-icon-theme' 'ttf-dejavu' 'xcursor-neutral' 'xed' 'playerctl' 'mpv-mpris' 'brightnessctl'
+depends=('dex' 'papirus-icon-theme' 'ttf-dejavu' 'xcursor-neutral' 'xed' 'playerctl' 'mpv-mpris' 'brightnessctl' 'scrot' 'xclip' 'xdg-user-dirs'
          'libnotify')
 optdepends=('zenity: calendar on a click on the tint2 clock'
             'geany: editor for the menu entries that edit the obmenu-generator config')
