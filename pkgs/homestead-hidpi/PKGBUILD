@@ -10,8 +10,8 @@
 # repo states no version): 32 px DejaVu fonts, menu sizes and frame images doubled. GRUB_THEME is a
 # manual step (README).
 pkgname=homestead-hidpi
-_commit=65d57242e7d2cf7fc2e0ab03a0e631eed2322df8
-pkgver=r36.g65d5724
+_commit=2dfc855339420af9330e0ce6d1862c38d8d8ad39
+pkgver=r41.g2dfc855
 pkgrel=1
 pkgdesc="2x HiDPI settings for the Homestead desktop (GDK, Xft.dpi, X and GTK cursor size, scaled tint2, Openbox and GRUB theme)"
 arch=('any')
